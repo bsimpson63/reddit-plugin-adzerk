@@ -10,3 +10,15 @@ class Adzerk(Plugin):
             'adzerk/adzerk.js',
         )
     }
+
+    live_config = {
+        ConfigValue.tuple: [
+            'adzerk_test_srs',
+        ]
+    }
+
+    def load_controllers(self):
+        # replace the standard Ads view with an Adzerk specific one.
+        import r2.lib.pages.pages
+        from adzerkads import Ads as AdzerkAds
+        r2.lib.pages.pages.Ads = AdzerkAds
