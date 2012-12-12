@@ -1,11 +1,11 @@
 r.adzerk = {
     origin: 'http://static.adzerk.net',
     createAdFrame: function(name) {
-        if (name == 'child') {
+        if (name == 'sponsorship') {
             var iframe = $('<iframe>')
                 .attr({
                     'id': 'ad-' + name,
-                    'src': r.adzerk.origin + '/reddit/ads-load.html#child',
+                    'src': r.adzerk.origin + '/reddit/ads-load.html#sponsorship',
                     'frameBorder': 0,
                     'scrolling': 'no'
                 })
