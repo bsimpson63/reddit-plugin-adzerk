@@ -4,7 +4,7 @@ r.adzerk = {
         if (name == 'sponsorship') {
             var iframe = $('<iframe>')
                 .attr({
-                    'id': 'ad-' + name,
+                    'id': 'ad_' + name,
                     'src': r.adzerk.origin + '/reddit/ads-load.html#sponsorship',
                     'frameBorder': 0,
                     'scrolling': 'no'
