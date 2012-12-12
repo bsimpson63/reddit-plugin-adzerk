@@ -17,11 +17,12 @@ r.adzerk = {
 }
 
 $(window).on('message', function(ev) {
+    ev = ev.originalEvent
     if (ev.origin != r.adzerk.origin) {
       return
     }
     msg = ev.data.split(':')
     if (msg[0] == 'ados.createAdFrame') {
-      createAdFrame(msg[1])
+      r.adzerk.createAdFrame(msg[1])
     }
 })
