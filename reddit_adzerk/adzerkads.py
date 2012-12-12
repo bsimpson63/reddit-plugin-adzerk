@@ -9,3 +9,4 @@ class Ads(BaseAds):
         adzerk_test_srs = g.live_config.get("adzerk_test_srs")
         if adzerk_test_srs and c.site.name in adzerk_test_srs:
             self.ad_url = g.config["adzerk_url"]
+            self.frame_id = "ad_main"
