@@ -1,5 +1,8 @@
 r.adzerk = {
-    origin: 'http://static.adzerk.net',
+    origin: location.protocol == 'https:'
+            ? 'https://az.turbobytes.net'
+            : 'http://static.adzerk.net',
+
     createAdFrame: function(name) {
         if (name == 'sponsorship') {
             var iframe = $('<iframe>')
