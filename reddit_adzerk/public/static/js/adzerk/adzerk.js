@@ -3,19 +3,17 @@ r.adzerk = {
             ? 'https://az.turbobytes.net'
             : 'http://static.adzerk.net',
 
-    createAdFrame: function(name) {
-        if (name == 'sponsorship') {
-            var iframe = $('<iframe>')
-                .attr({
-                    'id': 'ad_' + name,
-                    'src': r.adzerk.origin + '/reddit/ads-load.html#sponsorship',
-                    'frameBorder': 0,
-                    'scrolling': 'no'
-                })
-            $('.side .sponsorshipbox')
-                .empty()
-                .append(iframe)
-        }
+    createSponsorshipAdFrame: function() {
+        var iframe = $('<iframe>')
+            .attr({
+                'id': 'ad_sponsorship',
+                'src': r.adzerk.origin + '/reddit/ads-load.html',
+                'frameBorder': 0,
+                'scrolling': 'no'
+            })
+        $('.side .sponsorshipbox')
+            .empty()
+            .append(iframe)
     }
 }
 
@@ -26,6 +24,6 @@ $(window).on('message', function(ev) {
     }
     msg = ev.data.split(':')
     if (msg[0] == 'ados.createAdFrame') {
-      r.adzerk.createAdFrame(msg[1])
+      r.adzerk.createSponsorshipAdFrame()
     }
 })
