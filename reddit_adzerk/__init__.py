@@ -13,6 +13,10 @@ class Adzerk(Plugin):
     }
 
     live_config = {
+        ConfigValue.bool: [
+            'adzerk_all_the_things',
+        ],
+
         ConfigValue.tuple: [
             'adzerk_test_srs',
         ]
