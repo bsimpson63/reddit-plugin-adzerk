@@ -18,7 +18,7 @@ class Adzerk(Plugin):
         ],
 
         ConfigValue.tuple: [
-            'adzerk_test_srs',
+            'adzerk_srs',
         ]
     }
 
