@@ -13,8 +13,9 @@ class Ads(BaseAds):
         in_adzerk_sr = adzerk_srs and c.site.name.lower() in adzerk_srs
         if adzerk_all_the_things or in_adzerk_sr:
             url_key = "adzerk_https_url" if c.secure else "adzerk_url"
+            site_name = getattr(c.site, "analytics_name", c.site.name)
             self.ad_url = g.config[url_key].format(
-                subreddit=quote(c.site.name.lower()),
+                subreddit=quote(site_name.lower()),
                 origin=c.request_origin,
             )
             self.frame_id = "ad_main"
