@@ -10,6 +10,7 @@ setup(name='reddit_adzerk',
     packages=find_packages(),
     install_requires=[
         'r2',
+        'requests',
     ],
     entry_points={
         'r2.plugin':
