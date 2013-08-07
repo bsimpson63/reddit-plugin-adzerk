@@ -423,7 +423,8 @@ def adzerk_request(keywords, num_placements=1, timeout=0.1):
 @add_controller
 class AdzerkApiController(api.ApiController):
     def POST_request_promo(self):
-        return super(AdzerkApiController, self).POST_request_promo()
+        if not (c.site and c.site.name in g.cpm_beta_srs):
+            return super(AdzerkApiController, self).POST_request_promo()
 
         srids = promote.srids_with_live_promos(c.user, c.site)
         if not srids:
