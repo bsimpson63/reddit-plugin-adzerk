@@ -1,5 +1,4 @@
 from r2.lib.plugin import Plugin
-from r2.lib.configparse import ConfigValue
 from r2.lib.js import Module
 
 
@@ -10,16 +9,6 @@ class Adzerk(Plugin):
         'reddit': Module('reddit.js',
             'adzerk/adzerk.js',
         )
-    }
-
-    live_config = {
-        ConfigValue.bool: [
-            'adzerk_all_the_things',
-        ],
-
-        ConfigValue.tuple: [
-            'adzerk_srs',
-        ]
     }
 
     def load_controllers(self):
