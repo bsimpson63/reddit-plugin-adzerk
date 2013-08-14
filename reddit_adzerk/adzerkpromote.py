@@ -282,7 +282,10 @@ def make_adzerk_promotions(offset=0):
     for link, campaign, weight in promote.accepted_campaigns(offset=offset):
         if (authorize.is_charged_transaction(campaign.trans_id, campaign._id)
             and promote.is_accepted(link)):
-            update_adzerk(link, campaign)
+            if is_overdelivered(campaign):
+                deactivate_campaign(link, campaign)
+            else:
+                update_adzerk(link, campaign)
 
 
 @hooks.on('promote.make_daily_promotions')
@@ -345,6 +348,14 @@ def _deactivate_campaign(link, campaign):
         az_flight.IsActive = False
         az_flight._send()
         PromotionLog.add(link, 'deactivated %s' % az_flight)
+
+
+def is_overdelivered(campaign):
+    if not hasattr(campaign, 'cpm'):
+        return False
+
+    billable_impressions = promote.get_billable_impressions(campaign)
+    return billable_impressions >= campaign.impressions
 
 
 def process_adzerk():
