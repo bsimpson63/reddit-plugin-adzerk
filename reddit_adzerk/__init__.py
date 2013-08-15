@@ -6,7 +6,7 @@ class Adzerk(Plugin):
     needs_static_build = True
 
     js = {
-        'reddit': Module('reddit.js',
+        'reddit-init': Module('reddit-init.js',
             'adzerk/adzerk.js',
         )
     }
