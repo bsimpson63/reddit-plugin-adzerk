@@ -1,6 +1,8 @@
 from collections import namedtuple
 import datetime
 import json
+import string
+from urllib import quote
 
 import adzerk_api
 from pylons import c, g
@@ -14,7 +16,7 @@ from r2.lib import (
     promote,
 )
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.filters import spaceCompress
+from r2.lib.filters import spaceCompress, _force_utf8
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
@@ -36,6 +38,11 @@ ADZERK_IMPRESSION_BUMP = 500    # add extra impressions to the number we
                                 # request from adzerk in case their count
                                 # is lower than our internal traffic tracking
 
+DELCHARS = ''.join(c for c in map(chr, range(256)) if not (c.isalnum() or c.isspace()))
+
+def sanitize_text(text):
+    return _force_utf8(text).translate(None, DELCHARS)
+
 
 def date_to_adzerk(d):
     utc_date = d - promote.timezone_offset
@@ -52,8 +59,8 @@ def render_link(link, campaign):
     return json.dumps({
         'link': link._fullname,
         'campaign': campaign._fullname,
-        'title': link.title,
-        'author': author.name,
+        'title': sanitize_text(link.title),
+        'author': sanitize_text(author.name),
         'target': campaign.sr_name,
     })
 
@@ -116,8 +123,8 @@ def update_creative(link, campaign):
         'ScriptBody': render_link(link, campaign),
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
-        'Alt': link.title,
-        'Url': link.url,
+        'Alt': sanitize_text(link.title),
+        'Url': quote(link.url),
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
@@ -129,7 +136,11 @@ def update_creative(link, campaign):
         changed = update_changed(az_creative, **d)
     else:
         d.update({'Title': title})
-        az_creative = adzerk_api.Creative.create(**d)
+        try:
+            az_creative = adzerk_api.Creative.create(**d)
+        except:
+            raise ValueError(d)
+
         campaign.adzerk_creative_id = az_creative.Id
         campaign._commit()
         log_text = 'created %s' % az_creative
