@@ -289,9 +289,9 @@ def adzerk_live_promotions(offset=0):
     make_adzerk_promotions(offset)
 
 
-@hooks.on('promote.charge_pending')
-def adzerk_future_promotions(offset=1):
-    make_adzerk_promotions(offset)
+@hooks.on('promote.new_charge')
+def adzerk_future_promotion(link, campaign):
+    update_adzerk(link, campaign)
 
 
 @hooks.on('promotion.void')
