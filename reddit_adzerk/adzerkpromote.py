@@ -356,7 +356,7 @@ def process_adzerk():
         elif action == 'deactivate_campaign':
             link = Link._by_fullname(data['link'], data=True)
             campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
-            _deactivate_campaign(campaign)
+            _deactivate_campaign(link, campaign)
         elif action == 'update_adzerk':
             link = Link._by_fullname(data['link'], data=True)
             campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
