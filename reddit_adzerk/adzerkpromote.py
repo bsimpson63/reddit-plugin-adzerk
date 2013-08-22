@@ -268,12 +268,13 @@ def update_adzerk(link, campaign):
 
 
 def _update_adzerk(link, campaign):
-    msg = '%s updating/creating adzerk objects for %s - %s'
-    g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
-    az_campaign = update_campaign(link)
-    az_creative = update_creative(link, campaign)
-    az_flight = update_flight(link, campaign)
-    az_cfmap = update_cfmap(link, campaign)
+    with g.make_lock('adzerk_update', link._fullname):
+        msg = '%s updating/creating adzerk objects for %s - %s'
+        g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
+        az_campaign = update_campaign(link)
+        az_creative = update_creative(link, campaign)
+        az_flight = update_flight(link, campaign)
+        az_cfmap = update_cfmap(link, campaign)
 
 
 def make_adzerk_promotions(offset=0):
@@ -312,11 +313,12 @@ def deactivate_link(link):
 
 
 def _deactivate_link(link):
-    g.log.debug('running deactivate_link %s' % link)
-    az_campaign = update_campaign(link)
-    az_campaign.IsActive = False
-    az_campaign._send()
-    PromotionLog.add(link, 'deactivated %s' % az_campaign)
+    with g.make_lock('adzerk_update', link._fullname):
+        g.log.debug('running deactivate_link %s' % link)
+        az_campaign = update_campaign(link)
+        az_campaign.IsActive = False
+        az_campaign._send()
+        PromotionLog.add(link, 'deactivated %s' % az_campaign)
 
 
 @hooks.on('campaign.void')
@@ -337,11 +339,12 @@ def deactivate_campaign(link, campaign):
 
 
 def _deactivate_campaign(link, campaign):
-    g.log.debug('running deactivate_campaign %s' % link)
-    az_flight = update_flight(link, campaign)
-    az_flight.IsActive = False
-    az_flight._send()
-    PromotionLog.add(link, 'deactivated %s' % az_flight)
+    with g.make_lock('adzerk_update', link._fullname):
+        g.log.debug('running deactivate_campaign %s' % link)
+        az_flight = update_flight(link, campaign)
+        az_flight.IsActive = False
+        az_flight._send()
+        PromotionLog.add(link, 'deactivated %s' % az_flight)
 
 
 def process_adzerk():
