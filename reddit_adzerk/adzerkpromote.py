@@ -199,7 +199,7 @@ def update_flight(link, campaign):
         az_flight = adzerk_api.Flight.create(**d)
         campaign.adzerk_flight_id = az_flight.Id
         campaign._commit()
-        log_text = 'created %s' % az_campaign
+        log_text = 'created %s' % az_flight
 
     if log_text:
         PromotionLog.add(link, log_text)
