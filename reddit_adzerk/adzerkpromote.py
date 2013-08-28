@@ -268,7 +268,7 @@ def update_adzerk(link, campaign):
 
 
 def _update_adzerk(link, campaign):
-    with g.make_lock('adzerk_update', link._fullname):
+    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
         az_campaign = update_campaign(link)
@@ -313,7 +313,7 @@ def deactivate_link(link):
 
 
 def _deactivate_link(link):
-    with g.make_lock('adzerk_update', link._fullname):
+    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         g.log.debug('running deactivate_link %s' % link)
         az_campaign = update_campaign(link)
         az_campaign.IsActive = False
@@ -339,7 +339,7 @@ def deactivate_campaign(link, campaign):
 
 
 def _deactivate_campaign(link, campaign):
-    with g.make_lock('adzerk_update', link._fullname):
+    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         g.log.debug('running deactivate_campaign %s' % link)
         az_flight = update_flight(link, campaign)
         az_flight.IsActive = False
