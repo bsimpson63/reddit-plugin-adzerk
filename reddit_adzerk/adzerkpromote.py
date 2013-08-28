@@ -59,8 +59,8 @@ def render_link(link, campaign):
     return json.dumps({
         'link': link._fullname,
         'campaign': campaign._fullname,
-        'title': sanitize_text(link.title),
-        'author': sanitize_text(author.name),
+        'title': '',
+        'author': '',
         'target': campaign.sr_name,
     })
 
@@ -123,8 +123,8 @@ def update_creative(link, campaign):
         'ScriptBody': render_link(link, campaign),
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
-        'Alt': sanitize_text(link.title),
-        'Url': quote(link.url),
+        'Alt': '',
+        'Url': '',
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,

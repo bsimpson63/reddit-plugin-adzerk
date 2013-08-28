@@ -70,7 +70,7 @@ class Base(object):
                 raise ValueError(msg)
 
         for attr, val in attr.iteritems():
-            self.__setattr__(attr, val, fail_on_unrecognized=_is_response)
+            self.__setattr__(attr, val, fail_on_unrecognized=(not _is_response))
 
     def __setattr__(self, attr, val, fail_on_unrecognized=True):
         if attr not in self._fields and attr != 'Id':
@@ -78,7 +78,7 @@ class Base(object):
             if fail_on_unrecognized:
                 raise ValueError(msg)
             else:
-                sys.stderr.write('WARNING: %s' % msg)
+                pass
         object.__setattr__(self, attr, val)
 
     @classmethod
