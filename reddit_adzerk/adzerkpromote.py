@@ -437,7 +437,8 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
 @add_controller
 class AdzerkApiController(api.ApiController):
     def POST_request_promo(self):
-        if not (c.site and c.site.name in g.cpm_beta_srs):
+        if not (c.site and (c.site.name in g.cpm_beta_srs or
+                            c.site.name in ('AskReddit', 'movies'))):
             return super(AdzerkApiController, self).POST_request_promo()
 
         srids = promote.srids_with_live_promos(c.user, c.site)
