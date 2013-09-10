@@ -7,7 +7,7 @@ r.adzerk = {
         var iframe = $('<iframe>')
             .attr({
                 'id': 'ad_sponsorship',
-                'src': r.adzerk.origin + '/reddit/ads-load.html?bust',
+                'src': r.adzerk.origin + '/reddit/ads-load.html?bust2',
                 'frameBorder': 0,
                 'scrolling': 'no'
             })
