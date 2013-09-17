@@ -23,6 +23,7 @@ from r2.lib.hooks import HookRegistrar
 from r2.models import (
     Account,
     CampaignBuilder,
+    FakeSubreddit,
     Frontpage,
     Link,
     LinkListing,
@@ -437,18 +438,12 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
 @add_controller
 class AdzerkApiController(api.ApiController):
     def POST_request_promo(self):
-        srids = promote.srids_with_live_promos(c.user, c.site)
-        if not srids:
-            return
-
-        if '' in srids:
-            srnames = [Frontpage.name]
-            srids.remove('')
+        if isinstance(c.site, FakeSubreddit):
+            srs = Subreddit.user_subreddits(c.user, ids=False)
+            srnames = [sr.name for sr in srs]
+            srnames.append(Frontpage.name)
         else:
-            srnames = []
-
-        srs = Subreddit._byID(srids, data=True, return_dict=False)
-        srnames.extend(sr.name for sr in srs)
+            srnames = [c.site.name]
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
