@@ -20,6 +20,11 @@ from r2.lib.filters import spaceCompress, _force_utf8
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
+from r2.lib.validator import (
+    validate,
+    VPrintable,
+)
+
 from r2.models import (
     Account,
     CampaignBuilder,
@@ -437,13 +442,11 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
 
 @add_controller
 class AdzerkApiController(api.ApiController):
-    def POST_request_promo(self):
-        if isinstance(c.site, FakeSubreddit):
-            srs = Subreddit.user_subreddits(c.user, ids=False)
-            srnames = [sr.name for sr in srs]
-            srnames.append(Frontpage.name)
-        else:
-            srnames = [c.site.name]
+    @validate(srnames=VPrintable("srnames", max_length=2100))
+    def POST_request_promo(self, srnames):
+        srnames = srnames.split('+')
+        if not srnames:
+            return
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
