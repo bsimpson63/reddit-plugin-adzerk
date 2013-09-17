@@ -447,7 +447,7 @@ class AdzerkApiController(api.ApiController):
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
-        response = adzerk_request(srnames, num_placements=g.az_selfserve_num_request)
+        response = adzerk_request(srnames)
 
         if not response:
             return
