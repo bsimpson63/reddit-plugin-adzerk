@@ -450,6 +450,7 @@ class AdzerkApiController(api.ApiController):
         response = adzerk_request(srnames)
 
         if not response:
+            g.stats.simple_event('adzerk.request.no_promo')
             return
 
         res_by_campaign = {r.campaign: r for r in response}
@@ -460,8 +461,11 @@ class AdzerkApiController(api.ApiController):
                                   skip=True)
         listing = LinkListing(builder, nextprev=False).listing()
         if listing.things:
+            g.stats.simple_event('adzerk.request.valid_promo')
             w = listing.things[0]
             r = res_by_campaign[w.campaign]
             w.adserver_imp_pixel = r.imp_pixel
             w.adserver_click_url = r.click_url
             return spaceCompress(w.render())
+        else:
+            g.stats.simple_event('adzerk.request.skip_promo')
