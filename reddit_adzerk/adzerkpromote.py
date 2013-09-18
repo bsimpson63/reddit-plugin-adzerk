@@ -330,6 +330,14 @@ def _deactivate_link(link):
         PromotionLog.add(link, 'deactivated %s' % az_campaign)
 
 
+@hooks.on('campaign.edit')
+def edit_campaign(link, campaign):
+    if not hasattr(campaign, 'adzerk_flight_id'):
+        return
+    else:
+        update_adzerk(link, campaign)
+
+
 @hooks.on('campaign.void')
 def deactivate_campaign(link, campaign):
     if not (hasattr(link, 'adzerk_campaign_id') and
