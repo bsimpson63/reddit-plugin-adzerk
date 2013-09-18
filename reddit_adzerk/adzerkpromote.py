@@ -21,8 +21,8 @@ from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
 from r2.lib.validator import (
-    nop,
     validate,
+    VPrintable,
 )
 
 from r2.models import (
@@ -442,7 +442,7 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
 
 @add_controller
 class AdzerkApiController(api.ApiController):
-    @validate(srnames=nop("srnames"))
+    @validate(srnames=VPrintable("srnames", max_length=2100))
     def POST_request_promo(self, srnames):
         srnames = srnames.split('+')
         if not srnames:
