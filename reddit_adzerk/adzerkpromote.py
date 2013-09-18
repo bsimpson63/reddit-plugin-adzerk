@@ -452,9 +452,10 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
 class AdzerkApiController(api.ApiController):
     @validate(srnames=VPrintable("srnames", max_length=2100))
     def POST_request_promo(self, srnames):
-        srnames = srnames.split('+')
         if not srnames:
             return
+
+        srnames = srnames.split('+')
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
