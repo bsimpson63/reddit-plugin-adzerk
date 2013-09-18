@@ -398,7 +398,7 @@ def adzerk_request(keywords, num_placements=1, timeout=10):
         "keywords": [word.lower() for word in keywords],
     }
 
-    url = 'http://engine.adzerk.net/api/v2'
+    url = 'https://engine.adzerk.net/api/v2'
     headers = {'content-type': 'application/json'}
 
     timer = g.stats.get_timer("adzerk_timer")
