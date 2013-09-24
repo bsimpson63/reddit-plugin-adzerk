@@ -317,7 +317,7 @@ def deactivate_link(link):
 def _deactivate_link(link):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         g.log.debug('running deactivate_link %s' % link)
-        az_campaign = update_campaign(link)
+        az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
         az_campaign.IsActive = False
         az_campaign._send()
         PromotionLog.add(link, 'deactivated %s' % az_campaign)
@@ -351,7 +351,7 @@ def deactivate_campaign(link, campaign):
 def _deactivate_campaign(link, campaign):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         g.log.debug('running deactivate_campaign %s' % link)
-        az_flight = update_flight(link, campaign)
+        az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
         if az_flight.IsActive:
             az_flight.IsActive = False
             az_flight._send()
