@@ -283,20 +283,13 @@ def _update_adzerk(link, campaign):
         az_cfmap = update_cfmap(link, campaign)
 
 
-def make_adzerk_promotions(offset=0):
+@hooks.on('promote.make_daily_promotions')
+def deactivate_oversold(offset=0):
     # campaign goes live if is_charged_transaction and is_accepted
     for link, campaign, weight in promote.accepted_campaigns(offset=offset):
         if (authorize.is_charged_transaction(campaign.trans_id, campaign._id)
-            and promote.is_accepted(link)):
-            if is_overdelivered(campaign):
-                deactivate_campaign(link, campaign)
-            else:
-                update_adzerk(link, campaign)
-
-
-@hooks.on('promote.make_daily_promotions')
-def adzerk_live_promotions(offset=0):
-    make_adzerk_promotions(offset)
+                and promote.is_accepted(link) and is_overdelivered(campaign)):
+            deactivate_campaign(link, campaign)
 
 
 @hooks.on('promote.new_charge')
@@ -359,9 +352,10 @@ def _deactivate_campaign(link, campaign):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         g.log.debug('running deactivate_campaign %s' % link)
         az_flight = update_flight(link, campaign)
-        az_flight.IsActive = False
-        az_flight._send()
-        PromotionLog.add(link, 'deactivated %s' % az_flight)
+        if az_flight.IsActive:
+            az_flight.IsActive = False
+            az_flight._send()
+            PromotionLog.add(link, 'deactivated %s' % az_flight)
 
 
 def is_overdelivered(campaign):
