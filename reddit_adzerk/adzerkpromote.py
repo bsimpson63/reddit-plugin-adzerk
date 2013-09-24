@@ -281,6 +281,7 @@ def _update_adzerk(link, campaign):
         az_creative = update_creative(link, campaign)
         az_flight = update_flight(link, campaign)
         az_cfmap = update_cfmap(link, campaign)
+        PromotionLog.add(link, 'updated %s' % az_flight)
 
 
 @hooks.on('promote.make_daily_promotions')
