@@ -389,7 +389,7 @@ def process_adzerk():
 AdzerkResponse = namedtuple('AdzerkResponse',
                     ['link', 'campaign', 'target', 'imp_pixel', 'click_url'])
 
-def adzerk_request(keywords, num_placements=1, timeout=1):
+def adzerk_request(keywords, num_placements=1, timeout=1.5):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
     for div in divs:
