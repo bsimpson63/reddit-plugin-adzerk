@@ -418,8 +418,8 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
     except (requests.exceptions.Timeout, requests.exceptions.SSLError):
         g.log.info('adzerk request timeout')
         return None
-
-    timer.stop()
+    finally:
+        timer.stop()
 
     response = json.loads(r.text)
     decisions = response['decisions']
