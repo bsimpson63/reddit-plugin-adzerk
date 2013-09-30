@@ -415,7 +415,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1):
     try:
         r = requests.post(url, data=json.dumps(data), headers=headers,
                           timeout=timeout)
-    except requests.exceptions.Timeout:
+    except (requests.exceptions.Timeout, requests.exceptions.SSLError):
         g.log.info('adzerk request timeout')
         return None
 
