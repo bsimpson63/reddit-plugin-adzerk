@@ -175,7 +175,7 @@ def update_flight(link, campaign):
         'IsFullSpeed': False,
         'Keywords': srname_to_keyword(campaign.sr_name),
         'CampaignId': az_campaign.Id,
-        'PriorityId': g.az_selfserve_priority_id, # TODO: property of PromoCampaign
+        'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
         'IsActive': not (campaign._deleted or is_overdelivered(campaign)),
         'IsFreqCap': None,

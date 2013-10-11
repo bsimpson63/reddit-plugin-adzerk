@@ -10,12 +10,15 @@ class Adzerk(Plugin):
         ConfigValue.int: [
             'az_selfserve_site_id',
             'az_selfserve_advertiser_id',
-            'az_selfserve_priority_id',
             'az_selfserve_channel_id',
             'az_selfserve_publisher_id',
             'az_selfserve_network_id',
             'az_selfserve_ad_type',
             'az_selfserve_num_request',
+        ],
+
+        ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
+            'az_selfserve_priorities',
         ],
     }
 
