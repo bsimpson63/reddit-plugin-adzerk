@@ -434,7 +434,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
             continue
 
         imp_pixel = decision['impressionUrl']
-        click_url = decision['clickUrl']
+        click_url = ''
         body = json.loads(decision['contents'][0]['body'])
         campaign = body['campaign']
         link = body['link']
