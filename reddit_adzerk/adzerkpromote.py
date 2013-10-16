@@ -418,6 +418,9 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
     except (requests.exceptions.Timeout, requests.exceptions.SSLError):
         g.stats.simple_event('adzerk.request.timeout')
         return None
+    except requests.exceptions.ConnectionError:
+        g.stats.simple_event('adzerk.request.refused')
+        return None
     finally:
         timer.stop()
 
