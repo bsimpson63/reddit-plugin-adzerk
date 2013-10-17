@@ -181,7 +181,7 @@ def update_flight(link, campaign):
         'IsFreqCap': None,
     }
 
-    is_cpm = hasattr(campaign, 'cpm')
+    is_cpm = hasattr(campaign, 'cpm') and campaign.priority.cpm
     if is_cpm:
         d.update({
             'Price': campaign.cpm / 100.,   # convert from cents to dollars
@@ -192,7 +192,7 @@ def update_flight(link, campaign):
     else:
         d.update({
             'Price': campaign.bid,
-            'Impressions': int(campaign.bid / campaign.ndays),
+            'Impressions': 100,
             'GoalType': 2, # 2: Percentage
             'RateType': 1, # 1: Flat
         })
@@ -360,7 +360,7 @@ def _deactivate_campaign(link, campaign):
 
 
 def is_overdelivered(campaign):
-    if not hasattr(campaign, 'cpm'):
+    if not hasattr(campaign, 'cpm') or not campaign.priority.cpm:
         return False
 
     billable_impressions = promote.get_billable_impressions(campaign)
