@@ -91,7 +91,7 @@ def update_campaign(link):
     d = {
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'IsDeleted': False,
-        'IsActive': not link._deleted,
+        'IsActive': not (link._deleted or promote.is_rejected(link)),
         'Price': 0,
     }
 
