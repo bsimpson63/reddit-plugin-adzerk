@@ -90,8 +90,8 @@ def update_campaign(link):
 
     d = {
         'AdvertiserId': g.az_selfserve_advertiser_id,
-        'IsDeleted': False,
-        'IsActive': not (link._deleted or promote.is_rejected(link)),
+        'IsDeleted': link._deleted,
+        'IsActive': promote.is_accepted(link),
         'Price': 0,
     }
 
@@ -133,7 +133,7 @@ def update_creative(link, campaign):
         'Url': '',
         'IsHTMLJS': True,
         'IsSync': False,
-        'IsDeleted': False,
+        'IsDeleted': campaign._deleted,
         'IsActive': not campaign._deleted,
     }
 
@@ -176,8 +176,9 @@ def update_flight(link, campaign):
         'Keywords': srname_to_keyword(campaign.sr_name),
         'CampaignId': az_campaign.Id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
-        'IsDeleted': False,
-        'IsActive': not (campaign._deleted or is_overdelivered(campaign)),
+        'IsDeleted': campaign._deleted,
+        'IsActive': (promote.charged_or_not_needed(campaign) and
+                     not (campaign._deleted or is_overdelivered(campaign))),
         'IsFreqCap': None,
     }
 
@@ -242,7 +243,7 @@ def update_cfmap(link, campaign):
         'Creative': {'Id': az_creative.Id},
         'FlightId': az_flight.Id,
         'Impressions': 100, # Percentage
-        'IsDeleted': False,
+        'IsDeleted': campaign._deleted,
         'IsActive': not campaign._deleted,
     }
 
@@ -263,12 +264,12 @@ def update_cfmap(link, campaign):
     return az_cfmap
 
 
-def update_adzerk(link, campaign):
+def update_adzerk(link, campaign=None):
     g.log.debug('queuing update_adzerk %s %s' % (link, campaign))
     msg = json.dumps({
         'action': 'update_adzerk',
         'link': link._fullname,
-        'campaign': campaign._fullname,
+        'campaign': campaign._fullname if campaign else None,
     })
     amqp.add_item('adzerk_q', msg)
 
@@ -278,10 +279,14 @@ def _update_adzerk(link, campaign):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
         az_campaign = update_campaign(link)
-        az_creative = update_creative(link, campaign)
-        az_flight = update_flight(link, campaign)
-        az_cfmap = update_cfmap(link, campaign)
-        PromotionLog.add(link, 'updated %s' % az_flight)
+
+        if campaign:
+            az_creative = update_creative(link, campaign)
+            az_flight = update_flight(link, campaign)
+            az_cfmap = update_cfmap(link, campaign)
+            PromotionLog.add(link, 'updated %s' % az_flight)
+        else:
+            PromotionLog.add(link, 'updated %s' % az_campaign)
 
 
 @hooks.on('promote.make_daily_promotions')
@@ -290,29 +295,18 @@ def deactivate_oversold(offset=0):
     for link, campaign, weight in promote.accepted_campaigns(offset=offset):
         if (authorize.is_charged_transaction(campaign.trans_id, campaign._id)
                 and promote.is_accepted(link) and is_overdelivered(campaign)):
-            deactivate_campaign(link, campaign)
+            # update will deactivate overdelivered campaign
+            update_adzerk(link, campaign)
 
 
-@hooks.on('promote.new_charge')
-def adzerk_future_promotion(link, campaign):
-    update_adzerk(link, campaign)
+@hooks.on('promote.new_promotion')
+def new_promotion(link):
+    update_adzerk(link)
 
 
-@hooks.on('promotion.void')
-def deactivate_link(link):
-    # deactivating the adzerk campaign will deactivate associated adzerk flights
-
-    if not hasattr(link, 'adzerk_campaign_id'):
-        # Link can get voided without having been sent to adzerk if its
-        # start date is several days in the future
-        return
-
-    g.log.debug('queuing deactivate_link %s' % link)
-    msg = json.dumps({
-        'action': 'deactivate_link',
-        'link': link._fullname,
-    })
-    amqp.add_item('adzerk_q', msg)
+@hooks.on('promote.edit_promotion')
+def edit_promotion(link):
+    update_adzerk(link)
 
 
 def _deactivate_link(link):
@@ -324,29 +318,14 @@ def _deactivate_link(link):
         PromotionLog.add(link, 'deactivated %s' % az_campaign)
 
 
-@hooks.on('campaign.edit')
+@hooks.on('promote.new_campaign')
+def new_campaign(link, campaign):
+    update_adzerk(link, campaign)
+
+
+@hooks.on('promote.edit_campaign')
 def edit_campaign(link, campaign):
-    if not hasattr(campaign, 'adzerk_flight_id'):
-        return
-    else:
-        update_adzerk(link, campaign)
-
-
-@hooks.on('campaign.void')
-def deactivate_campaign(link, campaign):
-    if not (hasattr(link, 'adzerk_campaign_id') and
-            hasattr(campaign, 'adzerk_flight_id')):
-        # Campaign can get voided without having been sent to adzerk if its
-        # start date is several days in the future
-        return
-
-    g.log.debug('queuing deactivate_campaign %s' % link)
-    msg = json.dumps({
-        'action': 'deactivate_campaign',
-        'link': link._fullname,
-        'campaign': campaign._fullname,
-    })
-    amqp.add_item('adzerk_q', msg)
+    update_adzerk(link, campaign)
 
 
 def _deactivate_campaign(link, campaign):
@@ -357,6 +336,11 @@ def _deactivate_campaign(link, campaign):
             az_flight.IsActive = False
             az_flight._send()
             PromotionLog.add(link, 'deactivated %s' % az_flight)
+
+
+@hooks.on('promote.delete_campaign')
+def delete_campaign(link, campaign):
+    update_adzerk(link, campaign)
 
 
 def is_overdelivered(campaign):
@@ -382,7 +366,11 @@ def process_adzerk():
             _deactivate_campaign(link, campaign)
         elif action == 'update_adzerk':
             link = Link._by_fullname(data['link'], data=True)
-            campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
+            if data['campaign']:
+                campaign = PromoCampaign._by_fullname(data['campaign'],
+                                                      data=True)
+            else:
+                campaign = None
             _update_adzerk(link, campaign)
     amqp.consume_items('adzerk_q', _handle_adzerk, verbose=False)
 
