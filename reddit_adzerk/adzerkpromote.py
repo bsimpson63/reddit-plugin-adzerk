@@ -291,11 +291,8 @@ def _update_adzerk(link, campaign):
 
 @hooks.on('promote.make_daily_promotions')
 def deactivate_oversold(offset=0):
-    # campaign goes live if is_charged_transaction and is_accepted
-    for link, campaign, weight in promote.accepted_campaigns(offset=offset):
-        if (authorize.is_charged_transaction(campaign.trans_id, campaign._id)
-                and promote.is_accepted(link) and is_overdelivered(campaign)):
-            # update will deactivate overdelivered campaign
+    for campaign, link in promote.get_scheduled_promos(offset=offset):
+        if promote.is_live_promo(link) and is_overdelivered(campaign):
             update_adzerk(link, campaign)
 
 
