@@ -16,6 +16,9 @@ setup(name='reddit_adzerk',
         'r2.plugin':
             ['adzerk = reddit_adzerk:Adzerk']
     },
+    package_data={
+        'reddit_adzerk': ['data/*.json'],
+    },
     include_package_data=True,
     zip_safe=False,
 )

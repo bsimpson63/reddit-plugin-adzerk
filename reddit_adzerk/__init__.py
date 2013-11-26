@@ -1,3 +1,6 @@
+import json
+import pkg_resources
+
 from r2.lib.plugin import Plugin
 from r2.lib.configparse import ConfigValue
 from r2.lib.js import Module
@@ -36,6 +39,11 @@ class Adzerk(Plugin):
         queues.declare({
             "adzerk_q": MessageQueue(bind_to_self=True),
         })
+
+    def on_load(self, g):
+        locations = pkg_resources.resource_stream(__name__,
+                                                  "data/locations.json")
+        g.locations = json.loads(locations.read())
 
     def load_controllers(self):
         # replace the standard Ads view with an Adzerk specific one.
