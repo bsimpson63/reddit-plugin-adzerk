@@ -217,6 +217,21 @@ def update_flight(link, campaign, az_campaign):
         'IsFreqCap': None,
     }
 
+    location = campaign.location
+    if location:
+        d.update({
+            'GeoTargeting': [{
+                'CountryCode': location.country,
+                'Region': location.region,
+                'MetroCode': location.metro,
+                'IsExclude': False,
+            }],
+        })
+    else:
+        d.update({
+            'GeoTargeting': [],
+        })
+
     is_cpm = hasattr(campaign, 'cpm') and campaign.priority.cpm
     if is_cpm:
         d.update({
