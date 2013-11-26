@@ -6,6 +6,8 @@ from r2.lib.pages import Ads as BaseAds
 from r2.models.subreddit import DefaultSR
 
 
+FRONTPAGE_NAME = "-reddit.com"
+
 class Ads(BaseAds):
     def __init__(self):
         BaseAds.__init__(self)
@@ -15,7 +17,7 @@ class Ads(BaseAds):
 
         # adzerk reporting is easier when not using a space in the tag
         if isinstance(c.site, DefaultSR):
-            site_name = "-reddit.com"
+            site_name = FRONTPAGE_NAME
 
         self.ad_url = g.config[url_key].format(
             subreddit=quote(site_name.lower()),
