@@ -6,7 +6,7 @@ import string
 from urllib import quote
 
 import adzerk_api
-from pylons import c, g
+from pylons import c, g, request
 import requests
 
 from r2.controllers import api, add_controller
@@ -445,6 +445,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
     data = {
         "placements": placements,
         "keywords": [word.lower() for word in keywords],
+        "ip": request.ip,
     }
 
     url = 'https://engine.adzerk.net/api/v2'
