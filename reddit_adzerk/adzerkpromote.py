@@ -185,9 +185,10 @@ def update_flight(link, campaign):
         return
 
     campaign_overdelivered = is_overdelivered(campaign)
+    delayed_start = campaign.start_date + datetime.timedelta(minutes=10)
 
     d = {
-        'StartDate': date_to_adzerk(campaign.start_date),
+        'StartDate': date_to_adzerk(delayed_start),
         'EndDate': date_to_adzerk(campaign.end_date),
         'OptionType': 1, # 1: CPM, 2: Remainder
         'IsUnlimited': False,
