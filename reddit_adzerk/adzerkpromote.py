@@ -94,8 +94,9 @@ def update_campaign(link):
 
     d = {
         'AdvertiserId': g.az_selfserve_advertiser_id,
-        'IsDeleted': link._deleted,
-        'IsActive': promote.is_accepted(link),
+        'IsDeleted': False, # deleting an adzerk object will make it
+                            # unretrievable, so just set it inactive
+        'IsActive': promote.is_accepted(link) and not link._deleted,
         'Price': 0,
     }
 
@@ -141,7 +142,7 @@ def update_creative(link, campaign):
         'Url': '',
         'IsHTMLJS': True,
         'IsSync': False,
-        'IsDeleted': campaign._deleted,
+        'IsDeleted': False,
         'IsActive': not campaign._deleted,
     }
 
@@ -192,7 +193,7 @@ def update_flight(link, campaign):
         'Keywords': srname_to_keyword(campaign.sr_name),
         'CampaignId': az_campaign.Id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
-        'IsDeleted': campaign._deleted,
+        'IsDeleted': False,
         'IsActive': (promote.charged_or_not_needed(campaign) and
                      not (campaign._deleted or is_overdelivered(campaign))),
         'IsFreqCap': None,
@@ -277,7 +278,7 @@ def update_cfmap(link, campaign):
         'Creative': {'Id': az_creative.Id},
         'FlightId': az_flight.Id,
         'Impressions': 100, # Percentage
-        'IsDeleted': campaign._deleted,
+        'IsDeleted': False,
         'IsActive': not campaign._deleted,
     }
 
