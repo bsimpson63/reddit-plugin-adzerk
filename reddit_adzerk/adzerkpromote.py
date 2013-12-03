@@ -184,6 +184,8 @@ def update_flight(link, campaign):
         g.log.info('adzerk campaign %s was deleted' % link.adzerk_campaign_id)
         return
 
+    campaign_overdelivered = is_overdelivered(campaign)
+
     d = {
         'StartDate': date_to_adzerk(campaign.start_date),
         'EndDate': date_to_adzerk(campaign.end_date),
@@ -195,7 +197,7 @@ def update_flight(link, campaign):
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
         'IsActive': (promote.charged_or_not_needed(campaign) and
-                     not (campaign._deleted or is_overdelivered(campaign))),
+                     not (campaign._deleted or campaign_overdelivered)),
         'IsFreqCap': None,
     }
 
@@ -228,6 +230,10 @@ def update_flight(link, campaign):
     if log_text:
         PromotionLog.add(link, log_text)
         g.log.info(log_text)
+
+    if campaign_overdelivered:
+        campaign.adzerk_flight_overdelivered = True
+        campaign._commit()
 
     return az_flight
 
@@ -327,7 +333,9 @@ def _update_adzerk(link, campaign):
 @hooks.on('promote.make_daily_promotions')
 def deactivate_oversold(offset=0):
     for campaign, link in promote.get_scheduled_promos(offset=offset):
-        if promote.is_live_promo(link, campaign) and is_overdelivered(campaign):
+        if (promote.is_live_promo(link, campaign) and
+                not getattr(campaign, 'adzerk_flight_overdelivered', False) and
+                is_overdelivered(campaign)):
             update_adzerk(link, campaign)
 
 
