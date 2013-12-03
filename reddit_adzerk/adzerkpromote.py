@@ -306,15 +306,6 @@ def edit_promotion(link):
     update_adzerk(link)
 
 
-def _deactivate_link(link):
-    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
-        g.log.debug('running deactivate_link %s' % link)
-        az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
-        az_campaign.IsActive = False
-        az_campaign._send()
-        PromotionLog.add(link, 'deactivated %s' % az_campaign)
-
-
 @hooks.on('promote.new_campaign')
 def new_campaign(link, campaign):
     update_adzerk(link, campaign)
@@ -323,16 +314,6 @@ def new_campaign(link, campaign):
 @hooks.on('promote.edit_campaign')
 def edit_campaign(link, campaign):
     update_adzerk(link, campaign)
-
-
-def _deactivate_campaign(link, campaign):
-    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
-        g.log.debug('running deactivate_campaign %s' % link)
-        az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
-        if az_flight.IsActive:
-            az_flight.IsActive = False
-            az_flight._send()
-            PromotionLog.add(link, 'deactivated %s' % az_flight)
 
 
 @hooks.on('promote.delete_campaign')
@@ -354,14 +335,7 @@ def process_adzerk():
         data = json.loads(msg.body)
         g.log.debug('data: %s' % data)
         action = data.get('action')
-        if action == 'deactivate_link':
-            link = Link._by_fullname(data['link'], data=True)
-            _deactivate_link(link)
-        elif action == 'deactivate_campaign':
-            link = Link._by_fullname(data['link'], data=True)
-            campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
-            _deactivate_campaign(link, campaign)
-        elif action == 'update_adzerk':
+        if action == 'update_adzerk':
             link = Link._by_fullname(data['link'], data=True)
             if data['campaign']:
                 campaign = PromoCampaign._by_fullname(data['campaign'],
