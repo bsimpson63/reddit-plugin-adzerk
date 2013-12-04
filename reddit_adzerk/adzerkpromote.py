@@ -159,14 +159,12 @@ def update_creative(link, campaign):
     return az_creative
 
 
-def update_flight(link, campaign):
+def update_flight(link, campaign, az_campaign):
     """Add/update a reddit campaign as an Adzerk Flight"""
     if hasattr(campaign, 'adzerk_flight_id'):
         az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
     else:
         az_flight = None
-
-    az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
 
     campaign_overdelivered = is_overdelivered(campaign)
     delayed_start = campaign.start_date + datetime.timedelta(minutes=10)
@@ -223,17 +221,13 @@ def update_flight(link, campaign):
     return az_flight
 
 
-def update_cfmap(link, campaign):
+def update_cfmap(link, campaign, az_campaign, az_creative, az_flight):
     """Add/update a CreativeFlightMap.
     
     Map the the reddit link (adzerk Creative) and reddit campaign (adzerk
     Flight).
 
     """
-
-    az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
-    az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
-    az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
 
     if hasattr(campaign, 'adzerk_cfmap_id'):
         az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
@@ -290,8 +284,9 @@ def _update_adzerk(link, campaign):
 
         if campaign:
             az_creative = update_creative(link, campaign)
-            az_flight = update_flight(link, campaign)
-            az_cfmap = update_cfmap(link, campaign)
+            az_flight = update_flight(link, campaign, az_campaign)
+            az_cfmap = update_cfmap(link, campaign, az_campaign, az_creative,
+                                    az_flight)
             PromotionLog.add(link, 'updated %s' % az_flight)
         else:
             PromotionLog.add(link, 'updated %s' % az_campaign)
