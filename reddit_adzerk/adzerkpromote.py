@@ -84,11 +84,7 @@ def update_changed(adzerk_object, **d):
 def update_campaign(link):
     """Add/update a reddit link as an Adzerk Campaign"""
     if hasattr(link, 'adzerk_campaign_id'):
-        try:
-            az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
-        except adzerk_api.AdzerkError:
-            g.log.info('adzerk campaign %s was deleted' % link.adzerk_campaign_id)
-            return
+        az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
     else:
         az_campaign = None
 
@@ -124,11 +120,7 @@ def update_campaign(link):
 def update_creative(link, campaign):
     """Add/update a reddit link/campaign as an Adzerk Creative"""
     if hasattr(campaign, 'adzerk_creative_id'):
-        try:
-            az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
-        except adzerk_api.AdzerkError:
-            g.log.info('adzerk creative %s was deleted' % campaign.adzerk_creative_id)
-            return
+        az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
     else:
         az_creative = None
 
@@ -170,19 +162,11 @@ def update_creative(link, campaign):
 def update_flight(link, campaign):
     """Add/update a reddit campaign as an Adzerk Flight"""
     if hasattr(campaign, 'adzerk_flight_id'):
-        try:
-            az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
-        except adzerk_api.AdzerkError:
-            g.log.info('adzerk flight %s was deleted' % campaign.adzerk_flight_id)
-            return
+        az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
     else:
         az_flight = None
 
-    try:
-        az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
-    except adzerk_api.AdzerkError:
-        g.log.info('adzerk campaign %s was deleted' % link.adzerk_campaign_id)
-        return
+    az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
 
     campaign_overdelivered = is_overdelivered(campaign)
     delayed_start = campaign.start_date + datetime.timedelta(minutes=10)
@@ -247,31 +231,13 @@ def update_cfmap(link, campaign):
 
     """
 
-    try:
-        az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
-    except adzerk_api.AdzerkError:
-        g.log.info('adzerk campaign %s was deleted' % link.adzerk_campaign_id)
-        return
-
-    try:
-        az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
-    except adzerk_api.AdzerkError:
-        g.log.info('adzerk creative %s was deleted' % campaign.adzerk_creative_id)
-        return
-
-    try:
-        az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
-    except adzerk_api.AdzerkError:
-        g.log.info('adzerk flight %s was deleted' % campaign.adzerk_flight_id)
-        return
+    az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
+    az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
+    az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
 
     if hasattr(campaign, 'adzerk_cfmap_id'):
-        try:
-            az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
-                            campaign.adzerk_cfmap_id)
-        except adzerk_api.AdzerkError:
-            g.log.info('adzerk cfmap %s was deleted' % campaign.adzerk_cfmap_id)
-            return
+        az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
+                                                    campaign.adzerk_cfmap_id)
     else:
         az_cfmap = None
 
