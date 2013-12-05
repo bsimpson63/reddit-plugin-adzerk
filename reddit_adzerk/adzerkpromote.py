@@ -287,13 +287,33 @@ def _update_adzerk(link, campaign):
             PromotionLog.add(link, 'updated %s' % az_campaign)
 
 
+def deactivate_overdelivered(link, campaign):
+    g.log.debug('queuing deactivate_overdelivered %s %s' % (link, campaign))
+    msg = json.dumps({
+        'action': 'deactivate_overdelivered',
+        'link': link._fullname,
+        'campaign': campaign._fullname,
+    })
+    amqp.add_item('adzerk_q', msg)
+
+
+def _deactivate_overdelivered(link, campaign):
+    with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
+        msg = '%s deactivating adzerk flight for %s - %s'
+        g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
+
+        az_campaign = update_campaign(link)
+        az_flight = update_flight(link, campaign, az_campaign)
+        PromotionLog.add(link, 'deactivated %s' % az_flight)
+
+
 @hooks.on('promote.make_daily_promotions')
 def deactivate_oversold(offset=0):
     for campaign, link in promote.get_scheduled_promos(offset=offset):
         if (promote.is_live_promo(link, campaign) and
                 not getattr(campaign, 'adzerk_flight_overdelivered', False) and
                 is_overdelivered(campaign)):
-            update_adzerk(link, campaign)
+            deactivate_overdelivered(link, campaign)
 
 
 @hooks.on('promote.new_promotion')
@@ -334,15 +354,19 @@ def process_adzerk():
     def _handle_adzerk(msg):
         data = json.loads(msg.body)
         g.log.debug('data: %s' % data)
+
         action = data.get('action')
+        link = Link._by_fullname(data['link'], data=True)
+        if data['campaign']:
+            campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
+        else:
+            campaign = None
+
         if action == 'update_adzerk':
-            link = Link._by_fullname(data['link'], data=True)
-            if data['campaign']:
-                campaign = PromoCampaign._by_fullname(data['campaign'],
-                                                      data=True)
-            else:
-                campaign = None
             _update_adzerk(link, campaign)
+        elif action == 'deactivate_overdelivered':
+            _deactivate_overdelivered(link, campaign)
+
     amqp.consume_items('adzerk_q', _handle_adzerk, verbose=False)
 
 AdzerkResponse = namedtuple('AdzerkResponse',
