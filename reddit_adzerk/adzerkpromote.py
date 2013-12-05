@@ -221,19 +221,16 @@ def update_flight(link, campaign, az_campaign):
     return az_flight
 
 
-def update_cfmap(link, campaign, az_campaign, az_creative, az_flight):
-    """Add/update a CreativeFlightMap.
-    
+def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
+    """Create a CreativeFlightMap.
+
     Map the the reddit link (adzerk Creative) and reddit campaign (adzerk
     Flight).
 
     """
 
     if hasattr(campaign, 'adzerk_cfmap_id'):
-        az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
-                                                    campaign.adzerk_cfmap_id)
-    else:
-        az_cfmap = None
+        raise AttributeError('%s has existing adzerk_cfmap_id' % campaign)
 
     d = {
         'SizeOverride': False,
@@ -246,22 +243,16 @@ def update_cfmap(link, campaign, az_campaign, az_creative, az_flight):
         'FlightId': az_flight.Id,
         'Impressions': 100, # Percentage
         'IsDeleted': False,
-        'IsActive': not campaign._deleted,
+        'IsActive': True,
     }
 
+    az_cfmap = adzerk_api.CreativeFlightMap.create(az_flight.Id, **d)
+    campaign.adzerk_cfmap_id = az_cfmap.Id
+    campaign._commit()
 
-    log_text = None
-    if az_cfmap:
-        changed = update_changed(az_cfmap, **d)
-    else:
-        az_cfmap = adzerk_api.CreativeFlightMap.create(az_flight.Id, **d)
-        campaign.adzerk_cfmap_id = az_cfmap.Id
-        campaign._commit()
-        log_text = 'created %s' % az_cfmap
-
-    if log_text:
-        PromotionLog.add(link, log_text)
-        g.log.info(log_text)
+    log_text = 'created %s' % az_cfmap
+    PromotionLog.add(link, log_text)
+    g.log.info(log_text)
 
     return az_cfmap
 
@@ -285,8 +276,12 @@ def _update_adzerk(link, campaign):
         if campaign:
             az_creative = update_creative(link, campaign)
             az_flight = update_flight(link, campaign, az_campaign)
-            az_cfmap = update_cfmap(link, campaign, az_campaign, az_creative,
-                                    az_flight)
+            if hasattr(campaign, 'adzerk_cfmap_id'):
+                az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
+                                campaign.adzerk_cfmap_id)
+            else:
+                az_cfmap = create_cfmap(link, campaign, az_campaign,
+                                        az_creative, az_flight)
             PromotionLog.add(link, 'updated %s' % az_flight)
         else:
             PromotionLog.add(link, 'updated %s' % az_campaign)
