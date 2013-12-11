@@ -341,6 +341,24 @@ def delete_campaign(link, campaign):
     update_adzerk(link, campaign)
 
 
+def update_skipped(link_name, campaign_name):
+    """
+    Skipped promos can occur when the details of promoted links gets out of sync
+    between adzerk and reddit. Update adzerk when this occurs, but only update
+    once per hour per campaign.
+
+    """
+
+    campaign_id36 = campaign_name.split('_')[-1]
+    key = "update_skipped-%s" % campaign_id36
+    if not g.hardcache.get(key):
+        link = Link._by_fullname(link_name, data=True)
+        if not promote.is_promoted(link):
+            campaign = PromoCampaign._by_fullname(campaign_name)
+            update_adzerk(link, campaign)
+        g.hardcache.set(key, True, 3600) # set the key to live for 1 hour
+
+
 def is_overdelivered(campaign):
     if not hasattr(campaign, 'cpm') or not campaign.priority.cpm:
         return False
@@ -462,3 +480,5 @@ class AdzerkApiController(api.ApiController):
             return spaceCompress(w.render())
         else:
             g.stats.simple_event('adzerk.request.skip_promo')
+            for promotuple in tuples:
+                update_skipped(promotuple.link, promotuple.campaign)
