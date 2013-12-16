@@ -217,21 +217,6 @@ def update_flight(link, campaign, az_campaign):
         'IsFreqCap': None,
     }
 
-    location = campaign.location
-    if location:
-        d.update({
-            'GeoTargeting': [{
-                'CountryCode': location.country,
-                'Region': location.region,
-                'MetroCode': location.metro,
-                'IsExclude': False,
-            }],
-        })
-    else:
-        d.update({
-            'GeoTargeting': [],
-        })
-
     is_cpm = hasattr(campaign, 'cpm') and campaign.priority.cpm
     if is_cpm:
         d.update({
@@ -246,6 +231,54 @@ def update_flight(link, campaign, az_campaign):
             'Impressions': 100,
             'GoalType': 2, # 2: Percentage
             'RateType': 1, # 1: Flat
+        })
+
+    if az_flight and az_flight.GeoTargeting:
+        # special handling for geotargeting of existing flights
+        # can't update geotargeting through the Flight endpoint, do it manually
+        existing = az_flight.GeoTargeting[0]
+        az_geotarget = adzerk_api.GeoTargeting._from_item(existing)
+
+        if (campaign.location and
+            (campaign.location.country != az_geotarget.CountryCode or
+             campaign.location.region != az_geotarget.Region or
+             campaign.location.metro != str(az_geotarget.MetroCode) or
+             az_geotarget.IsExclude)):
+            # existing geotargeting doesn't match current location
+            az_geotarget.CountryCode = campaign.location.country
+            az_geotarget.Region = campaign.location.region
+            az_geotarget.MetroCode = campaign.location.metro
+            az_geotarget.IsExclude = False
+            az_geotarget._send(az_flight.Id)
+            log_text = 'updated geotargeting to %s' % campaign.location
+            PromotionLog.add(link, log_text)
+        elif not campaign.location:
+            # flight should no longer be geotargeted
+            az_geotarget._delete(az_flight.Id)
+            log_text = 'deleted geotargeting'
+            PromotionLog.add(link, log_text)
+
+        # only allow one geotarget per flight
+        for existing in az_flight.GeoTargeting[1:]:
+            az_geotarget = adzerk_api.GeoTargeting._from_item(existing)
+            az_geotarget._delete(az_flight.Id)
+
+    elif campaign.location:
+        # flight endpoint works when a new flight is being created or an
+        # existing one that didn't have geotargeting is being updated
+        d.update({
+            'GeoTargeting': [{
+                'CountryCode': campaign.location.country,
+                'Region': campaign.location.region,
+                'MetroCode': campaign.location.metro,
+                'IsExclude': False,
+            }],
+        })
+    else:
+        # no geotargeting, either a new flight is being created or an existing
+        # flight is being updated that wasn't geotargeted
+        d.update({
+            'GeoTargeting': [],
         })
 
     if az_flight:

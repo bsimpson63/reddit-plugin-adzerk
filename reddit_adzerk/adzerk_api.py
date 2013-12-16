@@ -445,3 +445,33 @@ class Campaign(Base):
 
     def __repr__(self):
         return '<Campaign %s>' % (self.Id)
+
+
+class GeoTargeting(Base):
+    _name = 'geotargeting'
+    _fields = FieldSet(
+        Field('CountryCode'),
+        Field('Region'),
+        Field('MetroCode'),
+        Field('IsExclude'), # geotargets can include or exclude locations
+    )
+
+    @classmethod
+    def _from_item(cls, item):
+        Id = item.pop('LocationId')
+        thing = cls(Id, _is_response=True, **item)
+        return thing
+
+    def _send(self, FlightId):
+        url = '/'.join([self._base_url, 'flight', str(FlightId), self._name,
+                        str(self.Id)])
+        data = self._to_data()
+        response = requests.put(url, headers=self._headers(), data=data)
+
+    def _delete(self, FlightId):
+        url = '/'.join([self._base_url, 'flight', str(FlightId), self._name,
+                        str(self.Id), 'delete'])
+        response = requests.get(url, headers=self._headers())
+
+    def __repr__(self):
+        return '<GeoTargeting %s>' % (self.Id)
