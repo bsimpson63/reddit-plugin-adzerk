@@ -1,6 +1,7 @@
 from collections import namedtuple
 import datetime
 import json
+import re
 import string
 from urllib import quote
 
@@ -56,6 +57,13 @@ def date_to_adzerk(d):
     return '/Date(%s)/' % epoch_milliseconds
 
 
+def date_from_adzerk(date_str):
+    epoch_str = re.findall('/Date\(([0-9]*)\)/', date_str)[0]
+    epoch_milliseconds = int(epoch_str)
+    epoch_seconds = epoch_milliseconds / 1000
+    return datetime.datetime.fromtimestamp(epoch_seconds, tz=g.tz)
+
+
 def srname_to_keyword(srname):
     return srname or Frontpage.name
 
@@ -72,13 +80,32 @@ def render_link(link, campaign):
 
 
 def update_changed(adzerk_object, **d):
-    changed = [(attr, val) for attr, val in d.iteritems()
-                          if getattr(adzerk_object, attr) != val]
+    changed = [(attr, val, getattr(adzerk_object, attr, None))
+               for attr, val in d.iteritems()
+               if getattr(adzerk_object, attr) != val]
     if changed:
-        for (attr, val) in changed:
+        for (attr, val, oldval) in changed:
             setattr(adzerk_object, attr, val)
         adzerk_object._send()
     return changed
+
+
+def make_change_strings(changed):
+    def change_to_str(change):
+        attr, newval, oldval = changed
+
+        if attr in ('StartDate', 'EndDate'):
+            try:
+                new_date = date_from_adzerk(newval)
+                old_date = date_from_adzerk(oldval)
+            except:
+                pass
+            else:
+                newval, oldval = new_date, old_date
+
+        return '%s: %s -> %s' % (attr, oldval, newval)
+
+    return map(change_to_str, changed)
 
 
 def update_campaign(link):
@@ -96,9 +123,13 @@ def update_campaign(link):
         'Price': 0,
     }
 
-    log_text = None
     if az_campaign:
         changed = update_changed(az_campaign, **d)
+        change_strs = make_change_strings(changed)
+        if change_strs:
+            log_text = 'updated %s: ' % az_campaign + ', '.join(change_strs)
+        else:
+            log_text = None
     else:
         d.update({
             'Name': link._fullname,
@@ -138,9 +169,13 @@ def update_creative(link, campaign):
         'IsActive': not campaign._deleted,
     }
 
-    log_text = None
     if az_creative:
         changed = update_changed(az_creative, **d)
+        change_strs = make_change_strings(changed)
+        if change_strs:
+            log_text = 'updated %s: ' % az_creative + ', '.join(change_strs)
+        else:
+            log_text = None
     else:
         d.update({'Title': title})
         try:
@@ -200,9 +235,19 @@ def update_flight(link, campaign, az_campaign):
             'RateType': 1, # 1: Flat
         })
 
-    log_text = None
     if az_flight:
         changed = update_changed(az_flight, **d)
+        change_strs = make_change_strings(changed)
+
+        if campaign_overdelivered:
+            billable = promote.get_billable_impressions(campaign)
+            over_str = 'overdelivered %s/%s' % (billable, campaign.impressions)
+            change_strs.append(over_str)
+
+        if change_strs:
+            log_text = 'updated %s: ' % az_flight + ', '.join(change_strs)
+        else:
+            log_text = None
     else:
         d.update({'Name': campaign._fullname})
         az_flight = adzerk_api.Flight.create(**d)
