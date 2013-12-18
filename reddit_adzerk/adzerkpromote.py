@@ -391,7 +391,7 @@ def is_overdelivered(campaign):
         return False
 
     billable_impressions = promote.get_billable_impressions(campaign)
-    return billable_impressions >= campaign.impressions
+    return billable_impressions >= campaign.impressions + ADZERK_IMPRESSION_BUMP
 
 
 def process_adzerk():
