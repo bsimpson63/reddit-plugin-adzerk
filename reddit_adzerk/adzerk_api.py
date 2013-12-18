@@ -121,6 +121,7 @@ class Base(object):
         url = '/'.join([self._base_url, self._name, str(self.Id)])
         data = self._to_data()
         response = requests.put(url, headers=self._headers(), data=data)
+        item = handle_response(response)
 
     @classmethod
     def get(cls, Id):
@@ -161,6 +162,7 @@ class Map(Base):
                         self.child._name, str(self.Id)])
         data = self._to_data()
         response = requests.put(url, headers=self._headers(), data=data)
+        item = handle_response(response)
 
     @classmethod
     def get(cls, ParentId, Id):
