@@ -91,8 +91,8 @@ def update_changed(adzerk_object, **d):
 
 
 def make_change_strings(changed):
-    def change_to_str(change):
-        attr, newval, oldval = changed
+    def change_to_str(change_tuple):
+        attr, newval, oldval = change_tuple
 
         if attr in ('StartDate', 'EndDate'):
             try:
