@@ -58,10 +58,13 @@ def date_to_adzerk(d):
 
 
 def date_from_adzerk(date_str):
-    epoch_str = re.findall('/Date\(([0-9]*)\)/', date_str)[0]
-    epoch_milliseconds = int(epoch_str)
-    epoch_seconds = epoch_milliseconds / 1000
-    return datetime.datetime.fromtimestamp(epoch_seconds, tz=g.tz)
+    try:
+        epoch_str = re.findall('/Date\(([0-9]*)\)/', date_str)[0]
+        epoch_milliseconds = int(epoch_str)
+        epoch_seconds = epoch_milliseconds / 1000
+        return datetime.datetime.fromtimestamp(epoch_seconds, tz=g.tz)
+    except StandardError:
+        return date_str
 
 
 def srname_to_keyword(srname):
@@ -95,13 +98,8 @@ def make_change_strings(changed):
         attr, newval, oldval = change_tuple
 
         if attr in ('StartDate', 'EndDate'):
-            try:
-                new_date = date_from_adzerk(newval)
-                old_date = date_from_adzerk(oldval)
-            except:
-                pass
-            else:
-                newval, oldval = new_date, old_date
+            newval = date_from_adzerk(newval)
+            oldval = date_from_adzerk(oldval)
 
         return '%s: %s -> %s' % (attr, oldval, newval)
 
