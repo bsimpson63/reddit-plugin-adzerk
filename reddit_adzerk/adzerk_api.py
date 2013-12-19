@@ -115,6 +115,8 @@ class Base(object):
         data = thing._to_data()
         response = requests.post(url, headers=cls._headers(), data=data)
         item = handle_response(response)
+        if isinstance(item.get('Id'), int) and item.get('Id') < 5000:
+            g.log.info('item with weird Id: %s' % response.text)
         return cls._from_item(item)
 
     def _send(self):
