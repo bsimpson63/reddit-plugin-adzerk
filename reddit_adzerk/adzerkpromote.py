@@ -502,6 +502,7 @@ class AdzerkApiController(api.ApiController):
             r = res_by_campaign[w.campaign]
             w.adserver_imp_pixel = r.imp_pixel
             w.adserver_click_url = r.click_url
+            w.num = ""
             return spaceCompress(w.render())
         else:
             g.stats.simple_event('adzerk.request.skip_promo')
