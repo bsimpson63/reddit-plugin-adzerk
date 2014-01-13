@@ -454,6 +454,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
         response = adzerk_api.handle_response(r)
     except adzerk_api.AdzerkError:
         g.stats.simple_event('adzerk.request.badresponse')
+        g.log.error('adzerk_request: bad json %s' % r.text)
         return None
 
     decisions = response['decisions']
