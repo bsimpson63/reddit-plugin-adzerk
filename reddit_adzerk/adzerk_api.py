@@ -355,7 +355,9 @@ class CreativeFlightMap(Map):
             d = val
             Id = d.pop('Id')
             if d:
-                val = Creative(Id, **d)
+                # if we are not fail_on_unrecognized, assume this is a response
+                is_response = not kw.get('fail_on_unrecognized', True)
+                val = Creative(Id, _is_response=is_response, **d)
             else:
                 val = Stub(Id)
         Map.__setattr__(self, attr, val, **kw)
