@@ -307,6 +307,7 @@ class Creative(Base):
         Field('Alt'),
         Field('IsHTMLJS', optional=True),
         Field('ScriptBody', optional=True),
+        Field('Metadata', optional=True),
         Field('IsSync'),
         Field('IsDeleted'),
         Field('IsActive'),
