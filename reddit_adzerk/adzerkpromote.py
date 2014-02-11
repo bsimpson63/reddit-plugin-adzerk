@@ -108,7 +108,7 @@ def make_change_strings(changed):
 
 def update_campaign(link):
     """Add/update a reddit link as an Adzerk Campaign"""
-    if hasattr(link, 'adzerk_campaign_id'):
+    if getattr(link, 'adzerk_campaign_id', None) is not None:
         az_campaign = adzerk_api.Campaign.get(link.adzerk_campaign_id)
     else:
         az_campaign = None
@@ -148,7 +148,7 @@ def update_campaign(link):
 
 def update_creative(link, campaign):
     """Add/update a reddit link/campaign as an Adzerk Creative"""
-    if hasattr(campaign, 'adzerk_creative_id'):
+    if getattr(campaign, 'adzerk_creative_id', None) is not None:
         az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
     else:
         az_creative = None
@@ -194,7 +194,7 @@ def update_creative(link, campaign):
 
 def update_flight(link, campaign, az_campaign):
     """Add/update a reddit campaign as an Adzerk Flight"""
-    if hasattr(campaign, 'adzerk_flight_id'):
+    if getattr(campaign, 'adzerk_flight_id', None) is not None:
         az_flight = adzerk_api.Flight.get(campaign.adzerk_flight_id)
     else:
         az_flight = None
@@ -323,7 +323,7 @@ def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
 
     """
 
-    if hasattr(campaign, 'adzerk_cfmap_id'):
+    if getattr(campaign, 'adzerk_cfmap_id', None) is not None:
         raise AttributeError('%s has existing adzerk_cfmap_id' % campaign)
 
     d = {
@@ -370,7 +370,7 @@ def _update_adzerk(link, campaign):
         if campaign:
             az_creative = update_creative(link, campaign)
             az_flight = update_flight(link, campaign, az_campaign)
-            if hasattr(campaign, 'adzerk_cfmap_id'):
+            if getattr(campaign, 'adzerk_cfmap_id', None) is not None:
                 az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
                                 campaign.adzerk_cfmap_id)
             else:
