@@ -11,7 +11,8 @@ class NotFound(AdzerkError): pass
 
 def handle_response(response):
     if not (200 <= response.status_code <= 299):
-        raise AdzerkError('response %s' % response.status_code)
+        raise AdzerkError('response %s: %s' % (response.status_code,
+                                               response.text))
     try:
         return json.loads(response.text)
     except ValueError:
