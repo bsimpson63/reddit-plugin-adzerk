@@ -89,7 +89,7 @@ class Base(object):
 
     def _to_item(self):
         item = {}
-        if self.Id:
+        if self.Id and self.Id is not None:
             item['Id'] = self.Id
         for attr in self._fields:
             if hasattr(self, attr):
