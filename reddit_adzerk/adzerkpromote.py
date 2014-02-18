@@ -201,6 +201,9 @@ def update_flight(link, campaign, az_campaign):
 
     campaign_overdelivered = is_overdelivered(campaign)
     delayed_start = campaign.start_date + datetime.timedelta(minutes=15)
+    if delayed_start >= campaign.end_date:
+        # start time must be before end time
+        delayed_start = campaign.start_date
 
     d = {
         'StartDate': date_to_adzerk(delayed_start),
