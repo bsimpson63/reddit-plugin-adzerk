@@ -311,8 +311,18 @@ def update_flight(link, campaign, az_campaign):
     if campaign_overdelivered:
         campaign.adzerk_flight_overdelivered = True
         campaign._commit()
+        free_future_inventory(campaign)
 
     return az_flight
+
+
+def free_future_inventory(campaign):
+    now = promote.promo_datetime_now().date()
+    q = PromotionWeights.query(thing_name=thing._fullname,
+                               promo_idx=idx)
+    q = q.filter(PromotionWeights.date > now)
+    for pw in q:
+        pw._delete()
 
 
 def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
