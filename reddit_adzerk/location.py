@@ -6,7 +6,7 @@ from pylons import g
 
 COUNTRIES_URL = 'http://api.adzerk.net/v1/countries'
 HEADERS = {
-    'X-Adzerk-ApiKey': g.az_ads_key,
+    'X-Adzerk-ApiKey': g.secrets['az_ads_key'],
     'Content-Type': 'application/x-www-form-urlencoded',
 }
 
