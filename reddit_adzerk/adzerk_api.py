@@ -55,7 +55,7 @@ class Base(object):
 
     @classmethod
     def _headers(cls):
-        return {'X-Adzerk-ApiKey': g.az_selfserve_key,
+        return {'X-Adzerk-ApiKey': g.secrets['az_selfserve_key'],
                 'Content-Type': 'application/x-www-form-urlencoded'}
 
     def __init__(self, Id, _is_response=False, **attr):
