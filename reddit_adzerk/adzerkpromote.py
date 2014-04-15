@@ -21,6 +21,7 @@ from r2.lib.filters import spaceCompress, _force_utf8
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
+from r2.lib.utils import UrlParser
 from r2.lib.validator import (
     validate,
     VPrintable,
@@ -559,7 +560,10 @@ class AdzerkApiController(api.ApiController):
             g.stats.simple_event('adzerk.request.valid_promo')
             w = listing.things[0]
             r = res_by_campaign[w.campaign]
-            w.adserver_imp_pixel = r.imp_pixel
+
+            up = UrlParser(r.imp_pixel)
+            up.hostname = "pixel.redditmedia.com"
+            w.adserver_imp_pixel = up.unparse()
             w.adserver_click_url = r.click_url
             w.num = ""
             return spaceCompress(w.render())
