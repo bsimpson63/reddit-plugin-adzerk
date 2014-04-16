@@ -561,12 +561,9 @@ class AdzerkApiController(api.ApiController):
             w = listing.things[0]
             r = res_by_campaign[w.campaign]
 
-            if w.fullname == 't3_22jmmk':
-                up = UrlParser(r.imp_pixel)
-                up.hostname = "pixel.redditmedia.com"
-                w.adserver_imp_pixel = up.unparse()
-            else:
-                w.adserver_imp_pixel = r.imp_pixel
+            up = UrlParser(r.imp_pixel)
+            up.hostname = "pixel.redditmedia.com"
+            w.adserver_imp_pixel = up.unparse()
             w.adserver_click_url = r.click_url
             w.num = ""
             return spaceCompress(w.render())
