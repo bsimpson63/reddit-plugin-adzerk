@@ -470,11 +470,13 @@ class GeoTargeting(Base):
                         str(self.Id)])
         data = self._to_data()
         response = requests.put(url, headers=self._headers(), data=data)
+        item = handle_response(response)
 
     def _delete(self, FlightId):
         url = '/'.join([self._base_url, 'flight', str(FlightId), self._name,
                         str(self.Id), 'delete'])
         response = requests.get(url, headers=self._headers())
+        message = handle_response(response)
 
     def __repr__(self):
         return '<GeoTargeting %s>' % (self.Id)
