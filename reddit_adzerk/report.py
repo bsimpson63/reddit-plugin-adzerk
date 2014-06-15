@@ -14,7 +14,7 @@ from r2.models.subreddit import Frontpage
 
 REPORT_URL = 'http://api.adzerk.net/v1/report'
 HEADERS = {
-    'X-Adzerk-ApiKey': g.secret['az_ads_key'],
+    'X-Adzerk-ApiKey': g.secrets['az_ads_key'],
     'Content-Type': 'application/x-www-form-urlencoded',
 }
 
