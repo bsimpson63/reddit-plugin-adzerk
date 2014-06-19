@@ -16,6 +16,7 @@ from r2.lib import (
     organic,
     promote,
 )
+from r2.lib.csrf import csrf_exempt
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.filters import spaceCompress, _force_utf8
 from r2.lib.pages.things import default_thing_wrapper
@@ -543,6 +544,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
 
 @add_controller
 class AdzerkApiController(api.ApiController):
+    @csrf_exempt
     @validate(srnames=VPrintable("srnames", max_length=2100))
     def POST_request_promo(self, srnames):
         if not srnames:
