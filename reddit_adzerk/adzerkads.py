@@ -22,5 +22,6 @@ class Ads(BaseAds):
         self.ad_url = g.config[url_key].format(
             subreddit=quote(site_name.lower()),
             origin=c.request_origin,
+            loggedin="loggedin" if c.user_is_loggedin else "loggedout",
         )
         self.frame_id = "ad_main"
