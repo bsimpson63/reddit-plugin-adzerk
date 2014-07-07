@@ -68,10 +68,6 @@ def date_from_adzerk(date_str):
         return date_str
 
 
-def srname_to_keyword(srname):
-    return srname or Frontpage.name
-
-
 def render_link(link, campaign):
     author = Account._byID(link.author_id, data=True)
     return json.dumps({
@@ -79,7 +75,7 @@ def render_link(link, campaign):
         'campaign': campaign._fullname,
         'title': '',
         'author': '',
-        'target': campaign.sr_name,
+        'target': '',
     })
 
 
@@ -212,7 +208,7 @@ def update_flight(link, campaign, az_campaign):
         'OptionType': 1, # 1: CPM, 2: Remainder
         'IsUnlimited': False,
         'IsFullSpeed': False,
-        'Keywords': srname_to_keyword(campaign.sr_name),
+        'Keywords': ' '.join(campaign.target.subreddit_names),
         'CampaignId': az_campaign.Id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
