@@ -233,6 +233,15 @@ def update_flight(link, campaign, az_campaign):
             'RateType': 1, # 1: Flat
         })
 
+    # special handling for location conversions between reddit and adzerk
+    if campaign.location:
+        campaign_country = campaign.location.country
+        campaign_region = campaign.location.region
+        if campaign.location.metro:
+            campaign_metro = int(campaign.location.metro)
+        else:
+            campaign_metro = None
+
     if az_flight and az_flight.GeoTargeting:
         # special handling for geotargeting of existing flights
         # can't update geotargeting through the Flight endpoint, do it manually
@@ -240,14 +249,14 @@ def update_flight(link, campaign, az_campaign):
         az_geotarget = adzerk_api.GeoTargeting._from_item(existing)
 
         if (campaign.location and
-            (campaign.location.country != az_geotarget.CountryCode or
-             campaign.location.region != az_geotarget.Region or
-             campaign.location.metro != str(az_geotarget.MetroCode) or
+            (campaign_country != az_geotarget.CountryCode or
+             campaign_region != az_geotarget.Region or
+             campaign_metro != az_geotarget.MetroCode or
              az_geotarget.IsExclude)):
             # existing geotargeting doesn't match current location
-            az_geotarget.CountryCode = campaign.location.country
-            az_geotarget.Region = campaign.location.region
-            az_geotarget.MetroCode = campaign.location.metro
+            az_geotarget.CountryCode = campaign_country
+            az_geotarget.Region = campaign_region
+            az_geotarget.MetroCode = campaign_metro
             az_geotarget.IsExclude = False
             az_geotarget._send(az_flight.Id)
             log_text = 'updated geotargeting to %s' % campaign.location
@@ -268,9 +277,9 @@ def update_flight(link, campaign, az_campaign):
         # existing one that didn't have geotargeting is being updated
         d.update({
             'GeoTargeting': [{
-                'CountryCode': campaign.location.country,
-                'Region': campaign.location.region,
-                'MetroCode': campaign.location.metro,
+                'CountryCode': campaign_country,
+                'Region': campaign_region,
+                'MetroCode': campaign_metro,
                 'IsExclude': False,
             }],
         })
