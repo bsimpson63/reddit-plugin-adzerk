@@ -272,6 +272,10 @@ def update_flight(link, campaign, az_campaign):
             az_geotarget = adzerk_api.GeoTargeting._from_item(existing)
             az_geotarget._delete(az_flight.Id)
 
+        # NOTE: need to unset GeoTargeting otherwise it will be added to the
+        # flight again when we _send updates
+        az_flight.GeoTargeting = None
+
     elif campaign.location:
         # flight endpoint works when a new flight is being created or an
         # existing one that didn't have geotargeting is being updated
