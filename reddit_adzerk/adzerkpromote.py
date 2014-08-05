@@ -208,7 +208,7 @@ def update_flight(link, campaign, az_campaign):
         'OptionType': 1, # 1: CPM, 2: Remainder
         'IsUnlimited': False,
         'IsFullSpeed': False,
-        'Keywords': ' '.join(campaign.target.subreddit_names),
+        'Keywords': '\n'.join(campaign.target.subreddit_names),
         'CampaignId': az_campaign.Id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
