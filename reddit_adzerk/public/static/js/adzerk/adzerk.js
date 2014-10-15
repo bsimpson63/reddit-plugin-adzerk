@@ -1,6 +1,6 @@
 r.adzerk = {
     origin: location.protocol == 'https:'
-            ? 'https://az.turbobytes.net'
+            ? 'https://static.adzerk.net'
             : 'http://static.adzerk.net',
 
     createSponsorshipAdFrame: function() {
