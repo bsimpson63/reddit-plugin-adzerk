@@ -40,11 +40,6 @@ class Adzerk(Plugin):
             "adzerk_q": MessageQueue(bind_to_self=True),
         })
 
-    def on_load(self, g):
-        locations = pkg_resources.resource_stream(__name__,
-                                                  "data/locations.json")
-        g.locations = json.loads(locations.read())
-
     def load_controllers(self):
         # replace the standard Ads view with an Adzerk specific one.
         import r2.lib.pages.pages
