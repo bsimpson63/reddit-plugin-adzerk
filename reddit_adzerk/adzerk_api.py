@@ -256,6 +256,7 @@ class Flight(Base):
         Field('ReferrerKeywords', optional=True),
         Field('WeightOverride', optional=True),
         Field('DeliveryStatus', optional=True),
+        Field('CustomTargeting', optional=True),
     )
 
     @classmethod

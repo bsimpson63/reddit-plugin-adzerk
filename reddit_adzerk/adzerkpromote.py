@@ -26,6 +26,7 @@ from r2.lib.utils import UrlParser
 from r2.lib.validator import (
     validate,
     VPrintable,
+    VBoolean,
 )
 
 from r2.models import (
@@ -233,6 +234,36 @@ def update_flight(link, campaign, az_campaign):
             'GoalType': 2, # 2: Percentage
             'RateType': 1, # 1: Flat
         })
+
+    if campaign.mobile_os:
+        deviceQueries = ['($device.os contains "%s")' % os
+                         for os in campaign.mobile_os]
+
+        if campaign.platform == "all":
+            deviceQueries.append('($device.formFactor contains "desktop")')
+        
+        customTargeting = ' or '.join(deviceQueries)
+        d.update({
+            'CustomTargeting': customTargeting,
+        })
+
+    if campaign.platform != 'all':
+        siteZones = []
+        if campaign.platform == 'desktop':
+            siteZones.append({
+                'SiteId': g.az_selfserve_site_id,
+                'IsExclude': False,
+            })
+        elif campaign.platform == 'mobile':
+            siteZones.append({
+                'SiteId': g.az_selfserve_mobile_web_site_id,
+                'IsExclude': False,
+            })
+
+        if len(siteZones):
+            d.update({
+                'SiteZoneTargeting': siteZones
+            })
 
     # special handling for location conversions between reddit and adzerk
     if campaign.location:
@@ -477,14 +508,20 @@ def process_adzerk():
 AdzerkResponse = namedtuple('AdzerkResponse',
                     ['link', 'campaign', 'target', 'imp_pixel', 'click_url'])
 
-def adzerk_request(keywords, num_placements=1, timeout=1.5):
+def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
+
+    if mobile_web:
+        site_id = g.az_selfserve_mobile_web_site_id
+    else:
+        site_id = g.az_selfserve_site_id
+
     for div in divs:
         placement = {
           "divName": div,
           "networkId": g.az_selfserve_network_id,
-          "siteId": g.az_selfserve_site_id,
+          "siteId": site_id,
           "adTypes": [g.az_selfserve_ad_type]
         }
         placements.append(placement)
@@ -496,7 +533,10 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
     }
 
     url = 'https://engine.adzerk.net/api/v2'
-    headers = {'content-type': 'application/json'}
+    headers = {
+        'content-type': 'application/json',
+        'user-agent': request.headers.get('User-Agent'),
+    }
 
     timer = g.stats.get_timer("adzerk_timer")
     timer.start()
@@ -545,8 +585,11 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5):
 @add_controller
 class AdzerkApiController(api.ApiController):
     @csrf_exempt
-    @validate(srnames=VPrintable("srnames", max_length=2100))
-    def POST_request_promo(self, srnames):
+    @validate(
+        srnames=VPrintable("srnames", max_length=2100),
+        is_mobile_web=VBoolean('is_mobile_web'),
+    )
+    def POST_request_promo(self, srnames, is_mobile_web):
         if not srnames:
             return
 
@@ -554,7 +597,7 @@ class AdzerkApiController(api.ApiController):
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
-        response = adzerk_request(srnames)
+        response = adzerk_request(srnames, mobile_web=is_mobile_web)
 
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')
