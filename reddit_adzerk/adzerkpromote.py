@@ -538,7 +538,7 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
         'user-agent': request.headers.get('User-Agent'),
     }
 
-    timer = g.stats.get_timer("adzerk_timer")
+    timer = g.stats.get_timer("providers.adzerk")
     timer.start()
 
     try:
