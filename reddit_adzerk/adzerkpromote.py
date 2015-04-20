@@ -18,7 +18,8 @@ from r2.lib import (
 )
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.filters import spaceCompress, _force_utf8
+from r2.lib.filters import _force_utf8
+from r2.lib.pages import responsive
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
@@ -621,6 +622,6 @@ class AdzerkApiController(api.ApiController):
             w.adserver_imp_pixel = up.unparse()
             w.adserver_click_url = r.click_url
             w.num = ""
-            return spaceCompress(w.render())
+            return responsive(w.render(), space_compress=True)
         else:
             g.stats.simple_event('adzerk.request.skip_promo')
