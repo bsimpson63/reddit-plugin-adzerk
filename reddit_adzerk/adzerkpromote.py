@@ -591,6 +591,8 @@ class AdzerkApiController(api.ApiController):
         is_mobile_web=VBoolean('is_mobile_web'),
     )
     def POST_request_promo(self, srnames, is_mobile_web):
+        self.OPTIONS_request_promo()
+
         if not srnames:
             return
 
