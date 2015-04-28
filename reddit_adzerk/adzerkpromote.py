@@ -247,6 +247,10 @@ def update_flight(link, campaign, az_campaign):
         d.update({
             'CustomTargeting': customTargeting,
         })
+    else:
+        d.update({
+            'CustomTargeting': '',
+        })
 
     if campaign.platform != 'all':
         siteZones = []
