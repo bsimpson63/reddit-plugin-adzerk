@@ -23,6 +23,10 @@ class Adzerk(Plugin):
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
             'az_selfserve_priorities',
         ],
+
+        ConfigValue.tuple_of(ConfigValue.int): [
+            'adserver_campaign_ids',
+        ],
     }
 
     js = {

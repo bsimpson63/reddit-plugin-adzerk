@@ -513,6 +513,11 @@ def process_adzerk():
 AdzerkResponse = namedtuple('AdzerkResponse',
                     ['link', 'campaign', 'target', 'imp_pixel', 'click_url'])
 
+class AdserverResponse(object):
+    def __init__(self, body):
+        self.body = body
+
+
 def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
@@ -577,6 +582,10 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
         if not decision:
             continue
 
+        # adserver ads are not reddit links, we return the body
+        if decision['campaignId'] in g.adserver_campaign_ids:
+            return AdserverResponse(decision['contents'][0]['body'])
+
         imp_pixel = decision['impressionUrl']
         click_url = decision['clickUrl']
         body = json.loads(decision['contents'][0]['body'])
@@ -609,6 +618,11 @@ class AdzerkApiController(api.ApiController):
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')
             return
+
+        # for adservers, adzerk returns markup so we pass it to the client
+        if isinstance(response, AdserverResponse):
+            g.stats.simple_event('adzerk.request.adserver')
+            return responsive(response.body)
 
         res_by_campaign = {r.campaign: r for r in response}
         tuples = [promote.PromoTuple(r.link, 1., r.campaign) for r in response]
