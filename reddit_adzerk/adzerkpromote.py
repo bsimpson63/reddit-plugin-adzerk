@@ -23,8 +23,9 @@ from r2.lib.pages import responsive
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.template_helpers import replace_render
 from r2.lib.hooks import HookRegistrar
-from r2.lib.utils import UrlParser
+from r2.lib.utils import Enum, UrlParser
 from r2.lib.validator import (
+    nop,
     validate,
     VPrintable,
     VBoolean,
@@ -50,6 +51,8 @@ ADZERK_IMPRESSION_BUMP = 500    # add extra impressions to the number we
                                 # is lower than our internal traffic tracking
 
 DELCHARS = ''.join(c for c in map(chr, range(256)) if not (c.isalnum() or c.isspace()))
+
+FREQ_CAP_TYPE = Enum(None, "hour", "day")
 
 def sanitize_text(text):
     return _force_utf8(text).translate(None, DELCHARS)
@@ -217,8 +220,15 @@ def update_flight(link, campaign, az_campaign):
         'IsDeleted': False,
         'IsActive': (promote.charged_or_not_needed(campaign) and
                      not (campaign._deleted or campaign_overdelivered)),
-        'IsFreqCap': None,
     }
+
+    if campaign.frequency_cap and campaign.frequency_cap_duration:
+        d.update({'IsFreqCap': True,
+                  'FreqCap': campaign.frequency_cap,
+                  'FreqCapDuration': campaign.frequency_cap_duration,
+                  'FreqCapType': FREQ_CAP_TYPE.hour})
+    else:
+        d['IsFreqCap'] = None
 
     is_cpm = hasattr(campaign, 'cpm') and campaign.priority.cpm
     if is_cpm:
@@ -518,7 +528,8 @@ class AdserverResponse(object):
         self.body = body
 
 
-def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
+def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
+                   mobile_web=False):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
 
@@ -541,6 +552,9 @@ def adzerk_request(keywords, num_placements=1, timeout=1.5, mobile_web=False):
         "keywords": [word.lower() for word in keywords],
         "ip": request.ip,
     }
+
+    if uid:
+        data["user"] = {"key": uid}
 
     url = 'https://engine.adzerk.net/api/v2'
     headers = {
@@ -602,6 +616,7 @@ class AdzerkApiController(api.ApiController):
     @validate(
         srnames=VPrintable("srnames", max_length=2100),
         is_mobile_web=VBoolean('is_mobile_web'),
+        loid=nop('loid', None),
     )
     def POST_request_promo(self, srnames, is_mobile_web):
         self.OPTIONS_request_promo()
@@ -613,7 +628,8 @@ class AdzerkApiController(api.ApiController):
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
-        response = adzerk_request(srnames, mobile_web=is_mobile_web)
+        response = adzerk_request(srnames, self.get_uid(loid),
+                                  mobile_web=is_mobile_web)
 
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')
@@ -645,3 +661,12 @@ class AdzerkApiController(api.ApiController):
             return responsive(w.render(), space_compress=True)
         else:
             g.stats.simple_event('adzerk.request.skip_promo')
+
+    def get_uid(self, loid):
+        if c.user_is_loggedin:
+            return c.user._id
+        elif loid:
+            return loid
+        else:
+            return None
+
