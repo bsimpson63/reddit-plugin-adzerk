@@ -10,6 +10,7 @@ from pylons import c, g, request
 import requests
 
 from r2.controllers import api, add_controller
+from r2.controllers.oauth2 import allow_oauth2_access
 from r2.lib import (
     amqp,
     authorize,
@@ -613,6 +614,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
 @add_controller
 class AdzerkApiController(api.ApiController):
     @csrf_exempt
+    @allow_oauth2_access
     @validate(
         srnames=VPrintable("srnames", max_length=2100),
         is_mobile_web=VBoolean('is_mobile_web'),
