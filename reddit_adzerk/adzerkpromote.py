@@ -666,7 +666,7 @@ class AdzerkApiController(api.ApiController):
 
     def get_uid(self, loid):
         if c.user_is_loggedin:
-            return c.user._id
+            return c.user._id36
         elif loid:
             return loid
         else:
