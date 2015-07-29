@@ -37,9 +37,9 @@ from r2.models import (
     CampaignBuilder,
     FakeSubreddit,
     Frontpage,
-    Link,
     LinkListing,
     PromoCampaign,
+    PromotedLink,
     PromotionLog,
     Subreddit,
 )
@@ -164,7 +164,7 @@ def update_creative(link, campaign):
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
         'Alt': '',
-        'Url': '',
+        'Url': link.absolute_url,
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
@@ -508,7 +508,7 @@ def process_adzerk():
         g.log.debug('data: %s' % data)
 
         action = data.get('action')
-        link = Link._by_fullname(data['link'], data=True)
+        link = PromotedLink._by_fullname(data['link'], data=True)
         if data['campaign']:
             campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
         else:
