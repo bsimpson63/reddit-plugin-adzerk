@@ -22,7 +22,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.filters import _force_utf8
 from r2.lib.pages import responsive
 from r2.lib.pages.things import default_thing_wrapper
-from r2.lib.template_helpers import replace_render
+from r2.lib.template_helpers import add_sr, replace_render
 from r2.lib.hooks import HookRegistrar
 from r2.lib.utils import Enum, UrlParser
 from r2.lib.validator import (
@@ -39,7 +39,7 @@ from r2.models import (
     Frontpage,
     LinkListing,
     PromoCampaign,
-    PromotedLink,
+    Link,
     PromotionLog,
     Subreddit,
 )
@@ -164,7 +164,7 @@ def update_creative(link, campaign):
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
         'Alt': '',
-        'Url': link.absolute_url,
+        'Url': add_sr(link.url, sr_path=False) if link.is_self else link.url,
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
@@ -508,7 +508,7 @@ def process_adzerk():
         g.log.debug('data: %s' % data)
 
         action = data.get('action')
-        link = PromotedLink._by_fullname(data['link'], data=True)
+        link = Link._by_fullname(data['link'], data=True)
         if data['campaign']:
             campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
         else:
