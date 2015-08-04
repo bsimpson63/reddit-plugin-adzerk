@@ -164,7 +164,7 @@ def update_creative(link, campaign):
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
         'Alt': '',
-        'Url': add_sr(link.url, sr_path=False) if link.is_self else link.url,
+        'Url': '',
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
