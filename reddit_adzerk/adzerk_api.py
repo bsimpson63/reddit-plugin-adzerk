@@ -97,7 +97,7 @@ class Base(object):
         return item
 
     def _to_data(self):
-        return '%s=%s' % (self._name, json.dumps(self._to_item()))
+        return {self._name: json.dumps(self._to_item())}
 
     @classmethod
     def list(cls):
