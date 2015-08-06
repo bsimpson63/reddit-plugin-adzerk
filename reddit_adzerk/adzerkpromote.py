@@ -666,6 +666,7 @@ class AdzerkApiController(api.ApiController):
                                   skip=True)
         listing = LinkListing(builder, nextprev=False).listing()
         promote.add_trackers(listing.things, c.site)
+        promote.update_served(listing.things)
         if listing.things:
             g.stats.simple_event('adzerk.request.valid_promo')
             w = listing.things[0]
