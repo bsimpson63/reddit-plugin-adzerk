@@ -6,6 +6,7 @@ import string
 from urllib import quote
 
 import adzerk_api
+from adzerk_utils import get_mobile_targeting_query
 from pylons import c, g, request
 import requests
 
@@ -247,16 +248,31 @@ def update_flight(link, campaign, az_campaign):
             'RateType': 1, # 1: Flat
         })
 
+    # Zerkel queries here
     if campaign.mobile_os:
-        deviceQueries = ['($device.os contains "%s")' % os
-                         for os in campaign.mobile_os]
+        queries_list = []
 
-        if campaign.platform == "all":
-            deviceQueries.append('($device.formFactor contains "desktop")')
+        ios_targets = get_mobile_targeting_query(os_str='iOS',
+                                                 lookup_str='modelName',
+                                                 mobile_os=campaign.mobile_os,
+                                                 devices=campaign.ios_devices,
+                                                 versions=campaign.ios_version_range)
+        queries_list.append(ios_targets)
+
+        android_targets = get_mobile_targeting_query(os_str='Android',
+                                                     lookup_str='formFactor',
+                                                     mobile_os=campaign.mobile_os,
+                                                     devices=campaign.android_devices,
+                                                     versions=campaign.android_version_range)
+        queries_list.append(android_targets)
+
+        if campaign.platform == 'all':
+            queries_list.append('($device.formFactor contains "desktop")')
+
+        mobile_targeting_query = ' or '.join(queries_list)
         
-        customTargeting = ' or '.join(deviceQueries)
         d.update({
-            'CustomTargeting': customTargeting,
+            'CustomTargeting': mobile_targeting_query,
         })
     else:
         d.update({
