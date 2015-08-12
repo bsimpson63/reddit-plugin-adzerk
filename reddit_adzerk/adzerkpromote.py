@@ -257,14 +257,16 @@ def update_flight(link, campaign, az_campaign):
                                                  mobile_os=campaign.mobile_os,
                                                  devices=campaign.ios_devices,
                                                  versions=campaign.ios_version_range)
-        queries_list.append(ios_targets)
+        if ios_targets:
+            queries_list.append(ios_targets)
 
         android_targets = get_mobile_targeting_query(os_str='Android',
                                                      lookup_str='formFactor',
                                                      mobile_os=campaign.mobile_os,
                                                      devices=campaign.android_devices,
                                                      versions=campaign.android_version_range)
-        queries_list.append(android_targets)
+        if android_targets:
+            queries_list.append(android_targets)
 
         if campaign.platform == 'all':
             queries_list.append('($device.formFactor contains "desktop")')

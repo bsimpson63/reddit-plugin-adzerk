@@ -85,4 +85,6 @@ def get_mobile_targeting_query(os_str='',
             queries.append(device_query)
             queries.append(version_query)
 
-    return '(%s)' % _join_queries('and', queries)
+        return '(%s)' % _join_queries('and', queries)
+
+    return None
