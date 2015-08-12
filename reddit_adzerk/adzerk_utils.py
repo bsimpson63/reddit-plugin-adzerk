@@ -65,26 +65,22 @@ def get_version_query(version_range):
 
 def get_mobile_targeting_query(os_str='',
                                lookup_str='',
-                               mobile_os=[],
                                devices=None,
                                versions=None):
     from adzerk_utils import get_version_query
 
-    if os_str in mobile_os:
-        queries = []
+    queries = []
 
-        os_query = '$device.os = "%s"' % os_str
-        queries.append(os_query)
+    os_query = '$device.os = "%s"' % os_str
+    queries.append(os_query)
 
-        if devices and versions:
-            device_queries = ['$device.%s like "%s"' % (lookup_str, device)
-                              for device in devices]
-            device_query = '(%s)' % _join_queries('or', device_queries)
-            version_query = '(%s)' % get_version_query(versions)
+    if devices and versions:
+        device_queries = ['$device.%s like "%s"' % (lookup_str, device)
+                          for device in devices]
+        device_query = '(%s)' % _join_queries('or', device_queries)
+        version_query = '(%s)' % get_version_query(versions)
 
-            queries.append(device_query)
-            queries.append(version_query)
+        queries.append(device_query)
+        queries.append(version_query)
 
-        return '(%s)' % _join_queries('and', queries)
-
-    return None
+    return '(%s)' % _join_queries('and', queries)

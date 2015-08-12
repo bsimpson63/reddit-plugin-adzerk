@@ -252,20 +252,18 @@ def update_flight(link, campaign, az_campaign):
     if campaign.mobile_os:
         queries_list = []
 
-        ios_targets = get_mobile_targeting_query(os_str='iOS',
-                                                 lookup_str='modelName',
-                                                 mobile_os=campaign.mobile_os,
-                                                 devices=campaign.ios_devices,
-                                                 versions=campaign.ios_version_range)
-        if ios_targets:
+        if 'iOS' in campaign.mobile_os:
+            ios_targets = get_mobile_targeting_query(os_str='iOS',
+                                                     lookup_str='modelName',
+                                                     devices=campaign.ios_devices,
+                                                     versions=campaign.ios_version_range)
             queries_list.append(ios_targets)
 
-        android_targets = get_mobile_targeting_query(os_str='Android',
-                                                     lookup_str='formFactor',
-                                                     mobile_os=campaign.mobile_os,
-                                                     devices=campaign.android_devices,
-                                                     versions=campaign.android_version_range)
-        if android_targets:
+        if 'Android' in campaign.mobile_os:
+            android_targets = get_mobile_targeting_query(os_str='Android',
+                                                         lookup_str='formFactor',
+                                                         devices=campaign.android_devices,
+                                                         versions=campaign.android_version_range)
             queries_list.append(android_targets)
 
         if campaign.platform == 'all':
