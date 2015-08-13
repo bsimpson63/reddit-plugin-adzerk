@@ -67,7 +67,6 @@ def get_mobile_targeting_query(os_str='',
                                lookup_str='',
                                devices=None,
                                versions=None):
-    from adzerk_utils import get_version_query
 
     queries = []
 
