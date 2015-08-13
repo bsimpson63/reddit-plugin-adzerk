@@ -74,7 +74,7 @@ def get_mobile_targeting_query(os_str='',
     queries.append(os_query)
 
     if devices and versions:
-        device_queries = ['$device.%s like "%s"' % (lookup_str, device)
+        device_queries = ['$device.%s CONTAINS "%s"' % (lookup_str, device)
                           for device in devices]
         device_query = '(%s)' % _join_queries('OR', device_queries)
         version_query = '(%s)' % get_version_query(versions)
