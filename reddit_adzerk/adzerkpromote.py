@@ -267,9 +267,9 @@ def update_flight(link, campaign, az_campaign):
             queries_list.append(android_targets)
 
         if campaign.platform == 'all':
-            queries_list.append('($device.formFactor contains "desktop")')
+            queries_list.append('($device.formFactor CONTAINS "desktop")')
 
-        mobile_targeting_query = ' or '.join(queries_list)
+        mobile_targeting_query = ' OR '.join(queries_list)
         
         d.update({
             'CustomTargeting': mobile_targeting_query,

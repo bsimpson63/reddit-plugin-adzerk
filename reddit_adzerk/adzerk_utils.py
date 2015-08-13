@@ -1,5 +1,5 @@
 def _join_queries(operator, *args):
-    delimiter = ' %s ' % operator
+    delimiter = ' %s ' % operator.upper()
     items = args[0] if isinstance(args[0], list) else args
     return delimiter.join(items)
 
@@ -10,8 +10,8 @@ def get_version_query(version_range):
 
     lower_major, lower_minor = [int(bound) for bound in version_range[0].split('.')]
 
-    lower_template = '($device.osVersion.major = %d and $device.osVersion.minor >= %d)'
-    upper_template = '($device.osVersion.major = %d and $device.osVersion.minor <= %d)'
+    lower_template = '($device.osVersion.major = %d AND $device.osVersion.minor >= %d)'
+    upper_template = '($device.osVersion.major = %d AND $device.osVersion.minor <= %d)'
 
     # if there is an upper bound
     if version_range[1]:
@@ -20,30 +20,30 @@ def get_version_query(version_range):
         lower_range = lower_template % (lower_major, lower_minor)
         upper_range = upper_template % (upper_major, upper_minor)
 
-        major_template = '($device.osVersion.major >= %d and $device.osVersion.major <= %d)'
+        major_template = '($device.osVersion.major >= %d AND $device.osVersion.major <= %d)'
 
         # if the min and max are the same
         if version_range[0] == version_range[1]:
-            range_query = ('($device.osVersion.major = %d and $device.osVersion.minor = %d)' %
+            range_query = ('($device.osVersion.major = %d AND $device.osVersion.minor = %d)' %
                              (lower_major, lower_minor))
 
         # if the min and max are the same major version (i.e., 5.1 & 5.9)
         elif lower_major == upper_major:
-            range_query = _join_queries('and', lower_range, upper_range)
+            range_query = _join_queries('AND', lower_range, upper_range)
 
         # if the min major and max major are within 1 of each other
         elif abs(lower_major - upper_major) <= 1:
-            range_query = _join_queries('or', lower_range, upper_range)
+            range_query = _join_queries('OR', lower_range, upper_range)
 
         # if the min minor is 0
         elif lower_minor == 0:
             major_range = major_template % (lower_major, upper_major - 1)
-            range_query = _join_queries('or', major_range, upper_range)
+            range_query = _join_queries('OR', major_range, upper_range)
 
         # everything else
         else:
             major_range = major_template % (lower_major + 1, upper_major - 1)
-            range_query = _join_queries('or', major_range, lower_range, upper_range)
+            range_query = _join_queries('OR', major_range, lower_range, upper_range)
 
     # if there is no upper bound
     else:
@@ -58,7 +58,7 @@ def get_version_query(version_range):
         else:
             major_range = major_template % (lower_major + 1)
             lower_range = lower_template % (lower_major, lower_minor)
-            range_query = _join_queries('or', major_range, lower_range)
+            range_query = _join_queries('OR', major_range, lower_range)
 
     return range_query
 
@@ -77,10 +77,10 @@ def get_mobile_targeting_query(os_str='',
     if devices and versions:
         device_queries = ['$device.%s like "%s"' % (lookup_str, device)
                           for device in devices]
-        device_query = '(%s)' % _join_queries('or', device_queries)
+        device_query = '(%s)' % _join_queries('OR', device_queries)
         version_query = '(%s)' % get_version_query(versions)
 
         queries.append(device_query)
         queries.append(version_query)
 
-    return '(%s)' % _join_queries('and', queries)
+    return '(%s)' % _join_queries('AND', queries)
