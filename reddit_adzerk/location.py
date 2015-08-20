@@ -1,7 +1,7 @@
 import json
 import requests
 
-from pylons import g
+from pylons import app_globals as g
 
 
 COUNTRIES_URL = 'https://api.adzerk.net/v1/countries'

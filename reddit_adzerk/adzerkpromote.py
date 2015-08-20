@@ -7,7 +7,9 @@ from urllib import quote
 
 import adzerk_api
 from adzerk_utils import get_mobile_targeting_query
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 import requests
 
 from r2.controllers import api, add_controller
