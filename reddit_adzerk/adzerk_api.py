@@ -2,7 +2,7 @@ import json
 import requests
 import sys
 
-from pylons import g
+from pylons import app_globals as g
 
 
 class AdzerkError(Exception): pass

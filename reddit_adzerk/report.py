@@ -3,7 +3,7 @@ import datetime
 import json
 import requests
 
-from pylons import g
+from pylons import app_globals as g
 
 from reddit_adzerk.adzerkads import FRONTPAGE_NAME
 from r2.models.promo import Location
