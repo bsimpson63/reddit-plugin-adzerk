@@ -45,6 +45,7 @@ from r2.models import (
     Subreddit,
 )
 
+from reddit_adzerk.lib.cache import PromoCampaignByFlightIdCache
 
 hooks = HookRegistrar()
 
@@ -76,11 +77,9 @@ def date_from_adzerk(date_str):
         return date_str
 
 
-def render_link(link, campaign):
-    author = Account._byID(link.author_id, data=True)
+def render_link(link):
     return json.dumps({
         'link': link._fullname,
-        'campaign': campaign._fullname,
         'title': '',
         'author': '',
         'target': '',
@@ -151,17 +150,17 @@ def update_campaign(link):
     return az_campaign
 
 
-def update_creative(link, campaign):
-    """Add/update a reddit link/campaign as an Adzerk Creative"""
-    if getattr(campaign, 'adzerk_creative_id', None) is not None:
-        az_creative = adzerk_api.Creative.get(campaign.adzerk_creative_id)
+def update_creative(link):
+    """Add/update a reddit link as an Adzerk Creative"""
+    if getattr(link, 'adzerk_creative_id', None) is not None:
+        az_creative = adzerk_api.Creative.get(link.adzerk_creative_id)
     else:
         az_creative = None
 
-    title = '-'.join((link._fullname, campaign._fullname))
+    title = link._fullname
     d = {
         'Body': title,
-        'ScriptBody': render_link(link, campaign),
+        'ScriptBody': render_link(link),
         'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': g.az_selfserve_ad_type,
         'Alt': '',
@@ -169,7 +168,7 @@ def update_creative(link, campaign):
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
-        'IsActive': not campaign._deleted,
+        'IsActive': not link._deleted,
     }
 
     if az_creative:
@@ -186,8 +185,8 @@ def update_creative(link, campaign):
         except:
             raise ValueError(d)
 
-        campaign.adzerk_creative_id = az_creative.Id
-        campaign._commit()
+        link.adzerk_creative_id = az_creative.Id
+        link._commit()
         log_text = 'created %s' % az_creative
 
     if log_text:
@@ -376,6 +375,8 @@ def update_flight(link, campaign, az_campaign):
         az_flight = adzerk_api.Flight.create(**d)
         campaign.adzerk_flight_id = az_flight.Id
         campaign._commit()
+
+        PromoCampaignByFlightIdCache.add(campaign)
         log_text = 'created %s' % az_flight
 
     if log_text:
@@ -435,14 +436,23 @@ def update_adzerk(link, campaign=None):
     amqp.add_item('adzerk_q', msg)
 
 
+def deactivate_orphaned_flight(adzerk_flight_id):
+    g.log.debug("queuing deactivate_orphaned_flight %s" % adzerk_flight_id)
+
+    amqp.add_item("adzerk_q", json.dumps({
+        "action": "deactivate_orphaned_flight",
+        "flight": adzerk_flight_id,
+    }))
+
+
 def _update_adzerk(link, campaign):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
         az_campaign = update_campaign(link)
+        az_creative = update_creative(link)
 
         if campaign:
-            az_creative = update_creative(link, campaign)
             az_flight = update_flight(link, campaign, az_campaign)
             if getattr(campaign, 'adzerk_cfmap_id', None) is not None:
                 az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
@@ -473,6 +483,19 @@ def _deactivate_overdelivered(link, campaign):
         az_campaign = update_campaign(link)
         az_flight = update_flight(link, campaign, az_campaign)
         PromotionLog.add(link, 'deactivated %s' % az_flight)
+
+
+def _deactivate_orphaned_flight(flight_id):
+    with g.make_lock('adzerk_update', 'adzerk-' + flight_id):
+        g.log.info('deactivating orphaned flight %s' % flight_id)
+
+        az_flight = adzerk_api.Flight.get(flight_id)
+
+        if not az_flight:
+            return
+
+        az_flight.IsActive = False
+        az_flight._send()
 
 
 @hooks.on('promote.make_daily_promotions')
@@ -524,6 +547,11 @@ def process_adzerk():
         g.log.debug('data: %s' % data)
 
         action = data.get('action')
+
+        if action == 'deactivate_orphaned_flight':
+            _deactivate_orphaned_flight(data['flight'])
+            return
+
         link = Link._by_fullname(data['link'], data=True)
         if data['campaign']:
             campaign = PromoCampaign._by_fullname(data['campaign'], data=True)
@@ -617,10 +645,23 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         if decision['campaignId'] in g.adserver_campaign_ids:
             return AdserverResponse(decision['contents'][0]['body'])
 
+        adzerk_flight_id = decision['flightId']
         imp_pixel = decision['impressionUrl']
         click_url = decision['clickUrl']
+
+        campaign = PromoCampaignByFlightIdCache.get(adzerk_flight_id)
+
+        if not campaign:
+            g.stats.simple_event('adzerk.request.orphaned_flight')
+            g.log.error('adzerk_request: couldn\'t find campaign for flight (%s)',
+                adzerk_flight_id)
+
+            # deactivate the flight, it will be reactivated if a
+            # valid campaign actually exists
+            deactivate_orphaned_flight(adzerk_flight_id)
+            continue
+
         body = json.loads(decision['contents'][0]['body'])
-        campaign = body['campaign']
         link = body['link']
         target = body['target']
         res.append(AdzerkResponse(link, campaign, target, imp_pixel, click_url))
