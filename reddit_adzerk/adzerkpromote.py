@@ -111,7 +111,7 @@ def make_change_strings(changed):
     return map(change_to_str, changed)
 
 
-def update_campaign(link):
+def update_campaign(link, az_advertiser=None):
     """Add/update a reddit link as an Adzerk Campaign"""
     if getattr(link, 'az_campaign_id', None) is not None:
         az_campaign = adzerk_api.Campaign.get(link.az_campaign_id)
@@ -119,12 +119,14 @@ def update_campaign(link):
         az_campaign = None
 
     d = {
-        'AdvertiserId': g.az_selfserve_advertiser_id,
         'IsDeleted': False, # deleting an adzerk object will make it
                             # unretrievable, so just set it inactive
         'IsActive': promote.is_accepted(link) and not link._deleted,
         'Price': 0,
     }
+
+    if az_advertiser:
+        d["AdvertiserId"] = az_advertiser.Id
 
     if az_campaign:
         changed = update_changed(az_campaign, **d)
@@ -151,7 +153,7 @@ def update_campaign(link):
     return az_campaign
 
 
-def update_creative(link):
+def update_creative(link, az_advertiser):
     """Add/update a reddit link as an Adzerk Creative"""
     if getattr(link, 'az_creative_id', None) is not None:
         az_creative = adzerk_api.Creative.get(link.az_creative_id)
@@ -162,7 +164,6 @@ def update_creative(link):
     d = {
         'Body': title,
         'ScriptBody': render_link(link),
-        'AdvertiserId': g.az_selfserve_advertiser_id,
         'AdTypeId': LEADERBOARD_AD_TYPE,
         'Alt': '',
         'Url': add_sr(link.url, sr_path=False) if link.is_self else link.url,
@@ -180,7 +181,10 @@ def update_creative(link):
         else:
             log_text = None
     else:
-        d.update({'Title': title})
+        d.update({
+            'AdvertiserId': az_advertiser.Id,
+            'Title': title,
+        })
         try:
             az_creative = adzerk_api.Creative.create(**d)
         except:
@@ -195,6 +199,26 @@ def update_creative(link):
         g.log.info(log_text)
 
     return az_creative
+
+
+def update_advertiser(author):
+    if getattr(author, 'az_advertiser_id', None) is not None:
+        az_advertiser = adzerk_api.Advertiser.get(author.az_advertiser_id)
+    else:
+        az_advertiser = None
+
+    if az_advertiser:
+        return az_advertiser
+
+    az_advertiser = adzerk_api.Advertiser.create(**{
+        "Title": author.name,
+        "IsActive": True,
+        "IsDeleted": False,
+    })
+    author.az_advertiser_id = az_advertiser.Id
+    author._commit()
+
+    return az_advertiser
 
 
 def update_flight(link, campaign, az_campaign):
@@ -450,8 +474,10 @@ def _update_adzerk(link, campaign):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
-        az_campaign = update_campaign(link)
-        az_creative = update_creative(link)
+        author = Account._byID(link.author_id, data=True)
+        az_advertiser = update_advertiser(author)
+        az_campaign = update_campaign(link, az_advertiser)
+        az_creative = update_creative(link, az_advertiser)
 
         if campaign:
             az_flight = update_flight(link, campaign, az_campaign)
