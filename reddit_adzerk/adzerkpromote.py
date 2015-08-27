@@ -507,13 +507,12 @@ def deactivate_overdelivered_campaigns(offset=0):
             deactivate_overdelivered(link, campaign)
 
 
-@hooks.on('promote.new_promotion')
-def new_promotion(link):
-    update_adzerk(link)
-
-
 @hooks.on('promote.edit_promotion')
 def edit_promotion(link):
+    if not list(PromoCampaign._by_link(link._id)):
+        g.log.debug("no campaigns for link, skipping %s" % link._id)
+        return
+
     update_adzerk(link)
 
 
