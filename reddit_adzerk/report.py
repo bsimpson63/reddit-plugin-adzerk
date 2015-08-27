@@ -12,7 +12,7 @@ from r2.models.subreddit import Frontpage
 
 # https://github.com/adzerk/adzerk-api/wiki/Reporting-API
 
-REPORT_URL = 'http://api.adzerk.net/v1/report'
+REPORT_URL = 'https://api.adzerk.net/v1/report'
 HEADERS = {
     'X-Adzerk-ApiKey': g.secrets['az_ads_key'],
     'Content-Type': 'application/x-www-form-urlencoded',

@@ -50,7 +50,7 @@ class FieldSet(object):
 
 class Base(object):
     _name = ''
-    _base_url = 'http://api.adzerk.net/v1'
+    _base_url = 'https://api.adzerk.net/v1'
     _fields = FieldSet()
 
     @classmethod
