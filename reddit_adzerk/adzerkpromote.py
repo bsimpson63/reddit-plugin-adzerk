@@ -405,7 +405,7 @@ def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
     d = {
         'SizeOverride': False,
         'CampaignId': az_campaign.Id,
-        'PublisherAccountId': g.az_selfserve_advertiser_id,
+        'PublisherAccountId': g.az_selfserve_publisher_id,
         'Percentage': 100,  # Each flight only has one creative (what about autobalanced)
         'DistributionType': 2, # 2: Percentage, 1: Auto-Balanced, 0: ???
         'Iframe': False,
