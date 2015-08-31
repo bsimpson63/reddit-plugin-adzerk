@@ -49,6 +49,7 @@ from reddit_adzerk.lib.cache import PromoCampaignByFlightIdCache
 
 hooks = HookRegistrar()
 
+LEADERBOARD_AD_TYPE = 4
 ADZERK_IMPRESSION_BUMP = 500    # add extra impressions to the number we
                                 # request from adzerk in case their count
                                 # is lower than our internal traffic tracking
@@ -162,7 +163,7 @@ def update_creative(link):
         'Body': title,
         'ScriptBody': render_link(link),
         'AdvertiserId': g.az_selfserve_advertiser_id,
-        'AdTypeId': g.az_selfserve_ad_type,
+        'AdTypeId': LEADERBOARD_AD_TYPE,
         'Alt': '',
         'Url': add_sr(link.url, sr_path=False) if link.is_self else link.url,
         'IsHTMLJS': True,
@@ -587,7 +588,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
           "divName": div,
           "networkId": g.az_selfserve_network_id,
           "siteId": site_id,
-          "adTypes": [g.az_selfserve_ad_type]
+          "adTypes": [LEADERBOARD_AD_TYPE]
         }
         placements.append(placement)
 

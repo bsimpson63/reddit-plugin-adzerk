@@ -16,7 +16,6 @@ class Adzerk(Plugin):
             'az_selfserve_channel_id',
             'az_selfserve_publisher_id',
             'az_selfserve_network_id',
-            'az_selfserve_ad_type',
             'az_selfserve_num_request',
         ],
 
