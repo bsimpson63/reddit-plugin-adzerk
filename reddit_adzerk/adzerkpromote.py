@@ -681,7 +681,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         if not campaign:
             g.stats.simple_event('adzerk.request.orphaned_flight')
             g.log.error('adzerk_request: couldn\'t find campaign for flight (az campaign: %s, flight: %s)',
-                (adzerk_campaign_id, adzerk_flight_id))
+                adzerk_campaign_id, adzerk_flight_id)
 
             # deactivate the flight, it will be reactivated if a
             # valid campaign actually exists
