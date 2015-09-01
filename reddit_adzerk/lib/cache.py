@@ -9,7 +9,7 @@ class PromoCampaignByFlightIdCache():
 
     @classmethod
     def add(cls, campaign):
-        cachekey = cls._cachekey(campaign.az_flight_id)
+        cachekey = cls._cachekey(campaign.external_flight_id)
         g.cache.set(cachekey, campaign._fullname, time=60*60*24)
 
     @classmethod
@@ -18,7 +18,7 @@ class PromoCampaignByFlightIdCache():
 
         if not fullname:
             q = PromoCampaign._query(
-                PromoCampaign.c.az_flight_id == flight_id,
+                PromoCampaign.c.external_flight_id == flight_id,
                 data=True,
             )
             q._limit = 1
