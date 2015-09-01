@@ -462,7 +462,7 @@ def update_adzerk(link, campaign=None):
 
 
 def deactivate_orphaned_flight(az_flight_id):
-    g.log.debug("queuing deactivate_orphaned_flight %s" % az_flight_id)
+    g.log.debug("queuing deactivate_orphaned_flight %d" % az_flight_id)
 
     amqp.add_item("adzerk_q", json.dumps({
         "action": "deactivate_orphaned_flight",
@@ -513,8 +513,8 @@ def _deactivate_overdelivered(link, campaign):
 
 
 def _deactivate_orphaned_flight(flight_id):
-    with g.make_lock('adzerk_update', 'adzerk-' + flight_id):
-        g.log.info('deactivating orphaned flight %s' % flight_id)
+    with g.make_lock('adzerk_update', 'adzerk-%d' % flight_id):
+        g.log.info('deactivating orphaned flight %d' % flight_id)
 
         az_flight = adzerk_api.Flight.get(flight_id)
 
