@@ -671,6 +671,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         if decision['campaignId'] in g.adserver_campaign_ids:
             return AdserverResponse(decision['contents'][0]['body'])
 
+        adzerk_campaign_id = decision['campaignId']
         adzerk_flight_id = decision['flightId']
         imp_pixel = decision['impressionUrl']
         click_url = decision['clickUrl']
@@ -679,8 +680,8 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
 
         if not campaign:
             g.stats.simple_event('adzerk.request.orphaned_flight')
-            g.log.error('adzerk_request: couldn\'t find campaign for flight (%s)',
-                adzerk_flight_id)
+            g.log.error('adzerk_request: couldn\'t find campaign for flight (az campaign: %s, flight: %s)',
+                (adzerk_campaign_id, adzerk_flight_id))
 
             # deactivate the flight, it will be reactivated if a
             # valid campaign actually exists
