@@ -337,7 +337,6 @@ class CreativeFlightMap(Map):
     _fields = FieldSet(
         Field('SizeOverride'),
         Field('CampaignId'),
-        Field('PublisherAccountId'),
         Field('IsDeleted'),
         Field('Percentage'),
         Field('Iframe'),
