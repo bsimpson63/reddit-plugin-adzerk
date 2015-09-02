@@ -422,6 +422,7 @@ class Campaign(Base):
     _fields = FieldSet(
         Field('Name'),
         Field('AdvertiserId'),
+        Field('SalespersonId'),
         Field('Flights'),
         Field('StartDate'),
         Field('EndDate', optional=True),

@@ -13,6 +13,7 @@ class Adzerk(Plugin):
         ConfigValue.int: [
             'az_selfserve_site_id',
             'az_selfserve_publisher_id',
+            'az_selfserve_salesperson_id',
             'az_selfserve_mobile_web_site_id',
             'az_selfserve_network_id',
         ],

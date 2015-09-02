@@ -119,6 +119,7 @@ def update_campaign(link, az_advertiser=None):
         az_campaign = None
 
     d = {
+        'SalespersonId': g.az_selfserve_salesperson_id,
         'IsDeleted': False, # deleting an adzerk object will make it
                             # unretrievable, so just set it inactive
         'IsActive': promote.is_accepted(link) and not link._deleted,
