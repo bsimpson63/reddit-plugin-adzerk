@@ -19,6 +19,7 @@ class PromoCampaignByFlightIdCache():
         if not fullname:
             q = PromoCampaign._query(
                 PromoCampaign.c.az_flight_id == flight_id,
+                data=True,
             )
             q._limit = 1
             campaigns = list(q)
