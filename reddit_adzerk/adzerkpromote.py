@@ -162,12 +162,19 @@ def update_creative(link, az_advertiser):
         az_creative = None
 
     title = link._fullname
+    url = add_sr(link.url, sr_path=False) if link.is_self else link.url
+
+    # protocols are case sensitive (lower) in adzerk.
+    # can cause double protocols:
+    # http://Http://www.example.com
+    url = re.sub(r"(https?)", lambda m: m.group(0).lower(), url, flags=re.I)
+
     d = {
         'Body': title,
         'ScriptBody': render_link(link),
         'AdTypeId': LEADERBOARD_AD_TYPE,
         'Alt': '',
-        'Url': add_sr(link.url, sr_path=False) if link.is_self else link.url,
+        'Url': url,
         'IsHTMLJS': True,
         'IsSync': False,
         'IsDeleted': False,
