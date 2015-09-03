@@ -167,7 +167,7 @@ def update_creative(link, az_advertiser):
     # protocols are case sensitive (lower) in adzerk.
     # can cause double protocols:
     # http://Http://www.example.com
-    url = re.sub(r"(https?)", lambda m: m.group(0).lower(), url, flags=re.I)
+    url = re.sub(r"^(https?)", lambda m: m.group(0).lower(), url, flags=re.I)
 
     d = {
         'Body': title,
@@ -207,6 +207,17 @@ def update_creative(link, az_advertiser):
         g.log.info(log_text)
 
     return az_creative
+
+
+def update_trackers(campaign, az_cfmap):
+    if (not getattr(campaign, "adserver_click_url", False) or
+        not getattr(campaign, "adserver_impression_url", False)):
+
+        pixels = az_cfmap._get_static_pixels()
+
+        campaign.adserver_click_url = pixels['StaticClickUrl']
+        campaign.adserver_impression_url = pixels['ImpressionPixelUrl']
+        campaign._commit()
 
 
 def update_advertiser(author):
@@ -494,6 +505,9 @@ def _update_adzerk(link, campaign):
             else:
                 az_cfmap = create_cfmap(link, campaign, az_campaign,
                                         az_creative, az_flight)
+
+            update_trackers(campaign, az_cfmap)
+
             PromotionLog.add(link, 'updated %s' % az_flight)
         else:
             PromotionLog.add(link, 'updated %s' % az_campaign)
