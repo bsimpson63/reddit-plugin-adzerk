@@ -748,13 +748,14 @@ class AdzerkApiController(api.ApiController):
             return responsive(response.body)
 
         res_by_campaign = {r.campaign: r for r in response}
+        adserver_click_urls = {r.campaign: r.click_url for r in response}
         tuples = [promote.PromoTuple(r.link, 1., r.campaign) for r in response]
         builder = CampaignBuilder(tuples, wrap=default_thing_wrapper(),
                                   keep_fn=promote.promo_keep_fn,
                                   num=1,
                                   skip=True)
         listing = LinkListing(builder, nextprev=False).listing()
-        promote.add_trackers(listing.things, c.site)
+        promote.add_trackers(listing.things, c.site, adserver_click_urls=adserver_click_urls)
         promote.update_served(listing.things)
         if listing.things:
             g.stats.simple_event('adzerk.request.valid_promo')
