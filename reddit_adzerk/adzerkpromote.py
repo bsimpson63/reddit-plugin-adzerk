@@ -108,7 +108,7 @@ def make_change_strings(changed):
             newval = date_from_adzerk(newval)
             oldval = date_from_adzerk(oldval)
 
-        return '%s: %s -> %s' % (attr, oldval, newval)
+        return '%s: %s -> %s' % (attr, _force_utf8(oldval), _force_utf8(newval))
 
     return map(change_to_str, changed)
 
