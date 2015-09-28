@@ -726,8 +726,9 @@ class AdzerkApiController(api.ApiController):
         srnames=VPrintable("srnames", max_length=2100),
         is_mobile_web=VBoolean('is_mobile_web'),
         loid=nop('loid', None),
+        is_refresh=VBoolean("is_refresh", default=False),
     )
-    def POST_request_promo(self, srnames, is_mobile_web, loid):
+    def POST_request_promo(self, srnames, is_mobile_web, loid, is_refresh):
         self.OPTIONS_request_promo()
 
         if not srnames:
@@ -761,6 +762,9 @@ class AdzerkApiController(api.ApiController):
         promote.update_served(listing.things)
         if listing.things:
             g.stats.simple_event('adzerk.request.valid_promo')
+            if is_refresh:
+                g.stats.simple_event('adzerk.request.auto_refresh')
+
             w = listing.things[0]
             r = res_by_campaign[w.campaign]
 
