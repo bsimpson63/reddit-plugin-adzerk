@@ -1,11 +1,19 @@
+import random
 from urllib import quote
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from pylons import request
 
+from r2.controllers import add_controller
+from r2.controllers.reddit_base import (
+    MinimalController,
+    UnloggedUser,
+)
+from r2.lib import promote
 from r2.lib.pages import Ads as BaseAds
+from r2.lib.wrapped import Templated
 from r2.models.subreddit import DefaultSR
-
 
 FRONTPAGE_NAME = "-reddit.com"
 
@@ -13,16 +21,60 @@ class Ads(BaseAds):
     def __init__(self):
         BaseAds.__init__(self)
 
-        url_key = "adzerk_https_url" if c.secure else "adzerk_url"
         site_name = getattr(c.site, "analytics_name", c.site.name)
 
         # adzerk reporting is easier when not using a space in the tag
         if isinstance(c.site, DefaultSR):
             site_name = FRONTPAGE_NAME
 
-        self.ad_url = g.config[url_key].format(
-            subreddit=quote(site_name.lower()),
+        placements = request.GET.get('placements', None)
+        sr = quote(site_name.lower())
+
+        ad_url = g.adzerk_url.format(
+            subreddit=sr,
             origin=c.request_origin,
             loggedin="loggedin" if c.user_is_loggedin else "loggedout",
         )
+
+        if placements:
+            ad_url = promote.update_query(ad_url, { "placements": placements })
+
+        self.ad_url = ad_url
         self.frame_id = "ad_main"
+
+
+class BaseAdFrame(Templated):
+    def __init__(self, **kwargs):
+        self.cache_buster = str(random.randint(0, 1000000))
+        return super(BaseAdFrame, self).__init__(**kwargs)
+
+
+class Ad300x250(BaseAdFrame):
+    pass
+
+
+class Ad300x250Companion(BaseAdFrame):
+    pass
+
+
+@add_controller
+class AdServingController(MinimalController):
+    def pre(self):
+        super(AdServingController, self).pre()
+
+        if request.host != g.media_domain:
+            # don't serve up untrusted content except on our
+            # specifically untrusted domain
+            self.abort404()
+
+        c.user = UnloggedUser([c.lang])
+        c.user_is_loggedin = False
+        c.forced_loggedout = True
+        c.allow_framing = True
+
+    def GET_ad_300_250(self):
+        return Ad300x250().render()
+
+    def GET_ad_300_250_companion(self):
+        return Ad300x250Companion().render()
+
