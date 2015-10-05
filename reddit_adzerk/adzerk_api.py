@@ -383,16 +383,6 @@ class CreativeFlightMap(Map):
         item['Creative'] = item['Creative']._to_item()
         return item
 
-    def _get_static_pixels(self):
-        url = '/'.join([self._base_url, self.parent._name,
-                        str(getattr(self, self.parent_id_attr)),
-                        self.child._name, str(self.Id),
-                        'trackingPixel'])
-        response = requests.get(url, headers=self._headers())
-        message = handle_response(response)
-
-        return message
-
     def __repr__(self):
         return '<CreativeFlightMap %s <Creative %s - Flight %s>>' % (
             self.Id,
