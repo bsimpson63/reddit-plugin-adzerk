@@ -39,7 +39,7 @@ class Ads(BaseAds):
 
         placements = request.GET.get("placements", None)
 
-        if placements:
+        if c.user_is_sponsor and placements:
             data["placements"] = placements
 
         self.ad_url = g.adzerk_url.format(data=json.dumps(data))
