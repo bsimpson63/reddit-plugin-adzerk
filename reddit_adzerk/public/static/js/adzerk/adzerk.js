@@ -1,39 +1,29 @@
-!(function(window, $, undefined) {
-  'use strict';
+r.adzerk = {
+    origin: location.protocol == 'https:'
+            ? 'https://static.adzerk.net'
+            : 'http://static.adzerk.net',
 
-  window.r = window.r || {};
-
-  r.adzerk = {
-
-    createSponsorshipAdFrame: function(overrideSrc) {
-      var $iframe = $('<iframe>');
-
-      $iframe
-        .attr({
-            id: 'ad_sponsorship',
-            src: '//' + r.config.media_domain + '/ads/display/300x250-companion',
-            frameBorder: 0,
-            scrolling: 'no',
-        });
-
-      $('.side .sponsorshipbox')
-        .empty()
-        .append($iframe);
-    },
-
-  };
-
-  $(window).on('message', function(e) {
-    e = e.originalEvent;
-
-    if (!new RegExp('^http(s)?:\\/\\/' + r.config.media_domain, 'i').test(e.origin)) {
-      return;
+    createSponsorshipAdFrame: function() {
+        var iframe = $('<iframe>')
+            .attr({
+                'id': 'ad_sponsorship',
+                'src': r.adzerk.origin + '/reddit/ads-load.html?bust2',
+                'frameBorder': 0,
+                'scrolling': 'no'
+            })
+        $('.side .sponsorshipbox')
+            .empty()
+            .append(iframe)
     }
+}
 
-    var messsage = e.data.split(':')
-    if (messsage[0] == 'ados.createAdFrame') {
-      r.adzerk.createSponsorshipAdFrame();
+$(window).on('message', function(ev) {
+    ev = ev.originalEvent
+    if (ev.origin != r.adzerk.origin) {
+      return
     }
-  });
-
-})(this, this.jQuery);
+    msg = ev.data.split(':')
+    if (msg[0] == 'ados.createAdFrame') {
+      r.adzerk.createSponsorshipAdFrame()
+    }
+})
