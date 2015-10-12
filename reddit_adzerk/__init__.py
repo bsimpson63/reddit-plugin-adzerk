@@ -29,11 +29,21 @@ class Adzerk(Plugin):
     js = {
         'reddit-init': Module('reddit-init.js',
             'adzerk/adzerk.js',
-        )
+        ),
+
+        'display': Module('display.js',
+            'adzerk/display.js',
+        ),
+
+        'companion': Module('companion.js',
+            'adzerk/companion.js',
+        ),
     }
 
     def add_routes(self, mc):
         mc('/api/request_promo/', controller='adzerkapi', action='request_promo')
+        mc('/ads/display/300x250/', controller='adserving', action='ad_300_250')
+        mc('/ads/display/300x250-companion/', controller='adserving', action='ad_300_250_companion')
 
     def declare_queues(self, queues):
         from r2.config.queues import MessageQueue
@@ -50,4 +60,5 @@ class Adzerk(Plugin):
         # replace standard adserver with Adzerk.
         from adzerkpromote import AdzerkApiController
         from adzerkpromote import hooks as adzerkpromote_hooks
+        from adzerkads import AdServingController
         adzerkpromote_hooks.register_all()

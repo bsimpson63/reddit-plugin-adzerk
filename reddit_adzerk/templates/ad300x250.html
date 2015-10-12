@@ -1,0 +1,11 @@
+<%!
+   from r2.lib import js
+   from r2.lib.filters import unsafe
+%>
+<%inherit file="baseadframe.html"/>
+
+<%def name="content()">
+  <div id="main"></div>
+  ${unsafe(js.use("display"))}
+  ${self.discuss("ad_main", "main")}
+</%def>
