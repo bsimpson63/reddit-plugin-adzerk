@@ -34,6 +34,7 @@ from r2.lib.validator import (
     validate,
     VPrintable,
     VBoolean,
+    VOneOf,
 )
 
 from r2.models import (
@@ -258,6 +259,11 @@ def update_flight(link, campaign, az_campaign):
     else:
         az_flight = None
 
+    # backwards compatability
+    if campaign.platform == "mobile":
+        campaign.platform = "mobile_web"
+        campaign._commit()
+
     campaign_overdelivered = is_overdelivered(campaign)
     delayed_start = campaign.start_date + datetime.timedelta(minutes=15)
     if delayed_start >= campaign.end_date:
@@ -344,22 +350,12 @@ def update_flight(link, campaign, az_campaign):
         })
 
     if campaign.platform != 'all':
-        siteZones = []
-        if campaign.platform == 'desktop':
-            siteZones.append({
-                'SiteId': g.az_selfserve_site_id,
+        d.update({
+            'SiteZoneTargeting': [{
+                'SiteId': g.az_selfserve_site_ids[campaign.platform],
                 'IsExclude': False,
-            })
-        elif campaign.platform == 'mobile':
-            siteZones.append({
-                'SiteId': g.az_selfserve_mobile_web_site_id,
-                'IsExclude': False,
-            })
-
-        if len(siteZones):
-            d.update({
-                'SiteZoneTargeting': siteZones
-            })
+            }],
+        })
 
     # special handling for location conversions between reddit and adzerk
     if campaign.location:
@@ -640,20 +636,15 @@ class AdserverResponse(object):
 
 
 def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
-                   mobile_web=False):
+                   platform="desktop"):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
-
-    if mobile_web:
-        site_id = g.az_selfserve_mobile_web_site_id
-    else:
-        site_id = g.az_selfserve_site_id
 
     for div in divs:
         placement = {
           "divName": div,
           "networkId": g.az_selfserve_network_id,
-          "siteId": site_id,
+          "siteId": g.az_selfserve_site_ids[platform],
           "adTypes": [LEADERBOARD_AD_TYPE]
         }
         placements.append(placement)
@@ -752,21 +743,30 @@ class AdzerkApiController(api.ApiController):
     @validate(
         srnames=VPrintable("srnames", max_length=2100),
         is_mobile_web=VBoolean('is_mobile_web'),
+        platform=VOneOf("platform", [
+            "desktop",
+            "mobile_web",
+            "mobile_native",
+        ], default=None),
         loid=nop('loid', None),
         is_refresh=VBoolean("is_refresh", default=False),
     )
-    def POST_request_promo(self, srnames, is_mobile_web, loid, is_refresh):
+    def POST_request_promo(self, srnames, is_mobile_web, platform, loid, is_refresh):
         self.OPTIONS_request_promo()
 
         if not srnames:
             return
+
+        # backwards compat
+        if platform is None:
+            platform = "mobile_web" if is_mobile_web else "desktop"
 
         srnames = srnames.split('+')
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
         response = adzerk_request(srnames, self.get_uid(loid),
-                                  mobile_web=is_mobile_web)
+                                  platform=platform)
 
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')

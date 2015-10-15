@@ -15,15 +15,14 @@ class Adzerk(Plugin):
         ],
 
         ConfigValue.int: [
-            'az_selfserve_site_id',
             'az_selfserve_salesperson_id',
-            'az_selfserve_mobile_web_site_id',
             'az_selfserve_network_id',
             'az_reporting_timeout',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
             'az_selfserve_priorities',
+            'az_selfserve_site_ids',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
