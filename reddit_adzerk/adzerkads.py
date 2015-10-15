@@ -1,6 +1,5 @@
 import json
 import random
-from urllib import quote
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
@@ -14,7 +13,9 @@ from r2.controllers.reddit_base import (
 from r2.lib import promote
 from r2.lib.pages import Ads as BaseAds
 from r2.lib.wrapped import Templated
-from r2.models.subreddit import DefaultSR
+from r2.models.subreddit import (
+    Frontpage,
+)
 
 FRONTPAGE_NAME = "-reddit.com"
 
@@ -22,16 +23,14 @@ class Ads(BaseAds):
     def __init__(self):
         BaseAds.__init__(self)
 
-        site_name = getattr(c.site, "analytics_name", c.site.name)
+        srnames = promote.srnames_from_site(c.user, c.site)
 
         # adzerk reporting is easier when not using a space in the tag
-        if isinstance(c.site, DefaultSR):
-            site_name = FRONTPAGE_NAME
+        if Frontpage.name in srnames:
+            srnames = srnames - {Frontpage.name} | {FRONTPAGE_NAME}
 
-        sr = quote(site_name.lower())
         data = {
-            "keywords": ",".join([
-                sr,
+            "keywords": ",".join(list(srnames) + [
                 "loggedin" if c.user_is_loggedin else "loggedout",
             ]),
             "origin": c.request_origin,
