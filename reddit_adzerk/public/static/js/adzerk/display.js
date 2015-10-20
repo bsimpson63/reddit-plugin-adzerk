@@ -19,6 +19,11 @@
     // see http://stackoverflow.com/a/1704842/704286
     var hash = location.href.split('#')[1] || '';
 
+    // Firefox automatically encodes thing the fragment, but not other browsers.
+    if (/^\{%22/.test(hash)) {
+      hash = decodeURIComponent((hash));
+    }
+
     try {
       return $.parseJSON(hash);
     } catch (e) {
