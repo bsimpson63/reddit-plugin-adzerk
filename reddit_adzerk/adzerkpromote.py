@@ -633,6 +633,11 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         "ip": request.ip,
     }
 
+    referrer = request.headers.get("referer", None)
+
+    if referrer:
+        data["referrer"] = referrer
+
     if uid:
         data["user"] = {"key": uid}
 
