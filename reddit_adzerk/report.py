@@ -5,24 +5,38 @@ import requests
 
 from pylons import app_globals as g
 
-from reddit_adzerk.adzerkads import FRONTPAGE_NAME
+from r2.lib.utils import Enum
 from r2.models.promo import Location
 from r2.models.promo_metrics import LocationPromoMetrics
 from r2.models.subreddit import Frontpage
 
+from reddit_adzerk.adzerkads import FRONTPAGE_NAME
+from reddit_adzerk import adzerk_api
+
 # https://github.com/adzerk/adzerk-api/wiki/Reporting-API
 
-REPORT_URL = 'https://api.adzerk.net/v1/report'
+URL_BASE = "https://api.adzerk.net/v1"
 HEADERS = {
     'X-Adzerk-ApiKey': g.secrets['az_ads_key'],
     'Content-Type': 'application/x-www-form-urlencoded',
 }
-
+STATUS = Enum(None, "PENDING", "COMPLETE", "ERROR")
 
 ReportItem = namedtuple('ReportItem', ['start', 'end', 'impressions', 'clicks'])
 ReportTuple = namedtuple('ReportTuple', ['date', 'impressions', 'clicks'])
 
 AZ_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+
+class ReportPendingException(Exception):
+    pass
+
+class ReportFailedException(Exception):
+    pass
+
+
+def adzerk_endpoint(endpoint):
+    return "%s/%s" % (URL_BASE, endpoint)
 
 
 def az_to_date(date_str):
@@ -50,6 +64,40 @@ def demangle_frontpage_name(keyword):
         return keyword
 
 
+def queue_report(start, end, groups=None, parameters=None):
+    data = {
+        "StartDate": start.strftime("%m/%d/%Y"),
+        "EndDate": end.strftime("%m/%d/%Y"),
+        "GroupBy": groups,
+        "Parameters": parameters,
+    }
+
+    criteria = "criteria=%s" % json.dumps(data)
+    response = requests.post(adzerk_endpoint("report/queue"), headers=HEADERS, data=criteria)
+    content = adzerk_api.handle_response(response)
+
+    g.log.debug(json.dumps(data))
+
+    return content["Id"]
+
+
+def fetch_report(report_id):
+    response = requests.get(adzerk_endpoint("report/queue/%s" % report_id), headers=HEADERS)
+    report_data = adzerk_api.handle_response(response)
+
+    status = report_data["Status"]
+
+    if status == STATUS.PENDING:
+        raise ReportPendingException("report pending - %s" % report_id)
+
+    if (status == STATUS.ERROR or
+        not "Result" in report_data):
+        raise ReportFailedException("adzerk report failed: %s - %s" %
+            (report_id, report_data.get("Message", "No data")))
+    else:
+        return report_data["Result"]
+
+
 def get_report(start, end, date_grouping='day', additional_groups=None,
                filters=None):
     additional_groups = additional_groups or []
@@ -65,7 +113,7 @@ def get_report(start, end, date_grouping='day', additional_groups=None,
 
     criteria = "criteria=%s" % json.dumps(data)
 
-    response = requests.post(REPORT_URL, headers=HEADERS, data=criteria)
+    response = requests.post(adzerk_endpoint("report"), headers=HEADERS, data=criteria)
 
     if not (200 <= response.status_code <= 299):
         raise ValueError('response %s' % response.status_code)

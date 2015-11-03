@@ -57,6 +57,7 @@ class Adzerk(Plugin):
         from r2.config.queues import MessageQueue
         queues.declare({
             "adzerk_q": MessageQueue(bind_to_self=True),
+            "adzerk_reporting_q": MessageQueue(bind_to_self=True),
         })
 
     def load_controllers(self):
