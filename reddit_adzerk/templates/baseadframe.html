@@ -1,5 +1,9 @@
 <%!
-   from r2.lib.filters import scriptsafe_dumps
+   from r2.lib import js
+   from r2.lib.filters import (
+      scriptsafe_dumps,
+      unsafe,
+   )
    from reddit_adzerk.lib import config
 %>
 
@@ -33,7 +37,7 @@
     script.async = true;
     document.getElementsByTagName('head')[0].appendChild(script);
   </script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  ${unsafe(js.use("ad-dependencies"))}
 </head>
 <body>
 ${self.content()}

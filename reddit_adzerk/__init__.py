@@ -42,6 +42,10 @@ class Adzerk(Plugin):
         'companion': Module('companion.js',
             'adzerk/companion.js',
         ),
+
+        'ad-dependencies': Module('ad-dependencies.js',
+            'adzerk/jquery.js',
+        ),
     }
 
     def add_routes(self, mc):
