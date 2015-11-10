@@ -231,7 +231,7 @@ class Flight(Base):
         Field('NoEndDate', optional=True),
         Field('Price'),
         Field('OptionType'),
-        Field('Impressions'),
+        Field('Impressions', optional=True),
         Field('IsUnlimited'),
         Field('IsNoDuplicates', optional=True),
         Field('IsFullSpeed'),
