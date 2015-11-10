@@ -305,6 +305,12 @@ def update_flight(link, campaign, az_campaign):
 
         if campaign.cost_basis == promo.PROMOTE_COST_BASIS.fixed_cpm:
             d['Impressions'] = campaign.impressions + ADZERK_IMPRESSION_BUMP
+        else:
+            d.update({
+                'CapType': 4,
+                'DailyCapAmount': campaign.total_budget_pennies / campaign.ndays,
+                'LifetimeCapAmount': campaign.total_budget_pennies,
+            })
 
     # Zerkel queries here
     if campaign.mobile_os:

@@ -264,6 +264,9 @@ class Flight(Base):
         Field('WeightOverride', optional=True),
         Field('DeliveryStatus', optional=True),
         Field('CustomTargeting', optional=True),
+        Field('DailyCapAmount', optional=True),
+        Field('LifetimeCapAmount', optional=True),
+        Field('CapType', optional=True),
     )
 
     @classmethod
