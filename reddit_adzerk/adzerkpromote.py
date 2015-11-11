@@ -647,7 +647,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
     if uid:
         data["user"] = {"key": uid}
 
-    url = 'https://engine.adzerk.net/api/v2'
+    url = 'https://%s/api/v2' % g.adzerk_engine_domain
     headers = {
         'content-type': 'application/json',
         'user-agent': request.headers.get('User-Agent'),
