@@ -10,10 +10,6 @@ class Adzerk(Plugin):
     needs_static_build = True
 
     config = {
-        ConfigValue.str: [
-            'adzerk_engine_domain',
-        ],
-
         ConfigValue.int: [
             'az_selfserve_site_id',
             'az_selfserve_salesperson_id',
