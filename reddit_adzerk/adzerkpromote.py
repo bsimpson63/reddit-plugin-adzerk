@@ -12,6 +12,7 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 import requests
 
+from r2.config import feature
 from r2.controllers import api, add_controller
 from r2.controllers.oauth2 import allow_oauth2_access
 from r2.lib import (
@@ -658,6 +659,11 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         'content-type': 'application/json',
         'user-agent': request.headers.get('User-Agent'),
     }
+
+    do_not_track = request.headers.get("DNT", None)
+
+    if do_not_track and feature.is_enabled("adzerk_do_not_track"):
+        headers["DNT"] = do_not_track
 
     timer = g.stats.get_timer("providers.adzerk")
     timer.start()
