@@ -319,6 +319,7 @@ class Creative(Base):
         Field('IsSync'),
         Field('IsDeleted'),
         Field('IsActive'),
+        Field('IsNoTrack', optional=True),
     )
 
     @classmethod

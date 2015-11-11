@@ -171,6 +171,11 @@ def update_creative(link, az_advertiser):
     # http://Http://www.example.com
     url = re.sub(r"^(https?)", lambda m: m.group(0).lower(), url, flags=re.I)
 
+    # as long as there are no 3rd party trackers for the link
+    # it's DNT compliant.
+    DNT_compliant = (not (hasattr(link, 'third_party_tracking_url') or
+        hasattr(link, 'third_party_tracking_url_2')))
+
     d = {
         'Body': title,
         'ScriptBody': render_link(link),
@@ -181,6 +186,7 @@ def update_creative(link, az_advertiser):
         'IsSync': False,
         'IsDeleted': False,
         'IsActive': not link._deleted,
+        'IsNoTrack': DNT_compliant,
     }
 
     if az_creative:
