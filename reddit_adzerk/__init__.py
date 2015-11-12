@@ -30,12 +30,6 @@ class Adzerk(Plugin):
         ],
     }
 
-    live_config = {
-        ConfigValue.float: [
-            "adzerk_dnt_domain_percentage",
-        ],
-    }
-
     js = {
         'reddit-init': Module('reddit-init.js',
             'adzerk/adzerk.js',
