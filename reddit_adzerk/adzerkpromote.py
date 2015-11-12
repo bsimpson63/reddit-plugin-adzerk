@@ -489,6 +489,11 @@ def _update_adzerk(link, campaign):
         az_campaign = update_campaign(link, az_advertiser)
         az_creative = update_creative(link, az_advertiser)
 
+        # Temporarily skip new (auction/fix cpm) campaigns during
+        # testing.
+        if campaign and not hasattr(campaign, "bid"):
+            return
+
         if campaign:
             az_flight = update_flight(link, campaign, az_campaign)
             if getattr(campaign, 'external_cfmap_id', None) is not None:
