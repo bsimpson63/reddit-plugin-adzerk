@@ -29,10 +29,11 @@
   <script>
     window.ADS_GLOBALS = ${scriptsafe_dumps(config.get_js_config())};
     window.ados = window.ados || {};
+    window.ados.domain = ${scriptsafe_dumps(g.adzerk_engine_domain)};
     ados.run = ados.run || [];
 
     var script = document.createElement('script');
-    script.src = '//static.adzerk.net/ados.js';
+    script.src = '//s.zkcdn.net/ados.js';
     script.async = true;
     document.getElementsByTagName('head')[0].appendChild(script);
   </script>
