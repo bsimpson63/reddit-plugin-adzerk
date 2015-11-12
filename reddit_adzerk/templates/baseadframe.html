@@ -29,7 +29,12 @@
   <script>
     window.ADS_GLOBALS = ${scriptsafe_dumps(config.get_js_config())};
     window.ados = window.ados || {};
-    window.ados.domain = ${scriptsafe_dumps(g.adzerk_engine_domain)};
+
+    var dntPercentage = ${scriptsafe_dumps(g.live_config.get("adzerk_dnt_domain_percentage", 0))};
+    if (Math.random() < dntPercentage) {
+      window.ados.domain = ${scriptsafe_dumps(g.adzerk_engine_domain)};
+    }
+    
     ados.run = ados.run || [];
 
     var script = document.createElement('script');
