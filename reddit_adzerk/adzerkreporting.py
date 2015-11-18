@@ -190,7 +190,7 @@ def _handle_generate_daily_link_report(link_id):
     # to redo it.  use the last time the report was run as a 
     # starting point, but subtract 24hrs since initial numbers
     # are preliminary.
-    if getattr(link, "last_daily_report_run") is not None:
+    if hasattr(link, "last_daily_report_run"):
         start = max([
             link.last_daily_report_run - timedelta(hours=24),
             link_start,
