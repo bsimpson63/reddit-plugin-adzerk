@@ -256,17 +256,25 @@ def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
     try:
         report_result = report.fetch_report(report_id)
     except report.ReportPendingException as e:
-        time.sleep(1)
+        timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
+            timedelta(seconds=g.az_reporting_timeout))
 
-        # send to the back of the queue
-        g.log.warning("campaign report still pending, sending to the back of the queue (%s/%s)" %
-            (campaign._fullname, report_id))
+        if queued_date < timeout:
+            g.log.warning("campaign report timed out, retrying (%s/%s)" %
+                (campaign._fullname, report_id))
 
-        _trigger_campaign_report(
-            campaign=campaign,
-            report_id=report_id,
-            queued_date=queued_date,
-        )
+            _generate_promo_report(campaign)
+        else:
+            g.log.warning("campaign report still pending, sending to the back of the queue (%s/%s)" %
+                (campaign._fullname, report_id))
+
+            time.sleep(1)
+
+            _trigger_campaign_report(
+                campaign=campaign,
+                report_id=report_id,
+                queued_date=queued_date,
+            )
         return
     except report.ReportFailedException as e:
         g.log.error(e)
@@ -294,16 +302,25 @@ def _handle_daily_link_report(link_id, report_id, queued_date):
     try:
         report_result = report.fetch_report(report_id)
     except report.ReportPendingException as e:
-        time.sleep(1)
+        timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
+            timedelta(seconds=g.az_reporting_timeout))
 
-        # send to the back of the queue
-        g.log.warning("link report still pending, sending to the back of the queue (%s/%s)" %
-            (link._fullname, report_id))
-        _trigger_link_report(
-            link=link,
-            report_id=report_id,
-            queued_date=queued_date,
-        )
+        if queued_date < timeout:
+            g.log.warning("link report timed out, retrying (%s/%s)" %
+                (link._fullname, report_id))
+
+            _generate_link_report(link)
+        else:
+            g.log.warning("link report still pending, sending to the back of the queue (%s/%s)" %
+                (link._fullname, report_id))
+
+            time.sleep(1)
+
+            _trigger_link_report(
+                link=link,
+                report_id=report_id,
+                queued_date=queued_date,
+            )
         return
     except report.ReportFailedException as e:
         g.log.error(e)
