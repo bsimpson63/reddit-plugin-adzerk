@@ -257,7 +257,17 @@ def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
         report_result = report.fetch_report(report_id)
     except report.ReportPendingException as e:
         time.sleep(1)
-        raise
+
+        # send to the back of the queue
+        g.log.warning("campaign report still pending, sending to the back of the queue (%s/%s)" %
+            (campaign._fullname, report_id))
+
+        _trigger_campaign_report(
+            campaign=campaign,
+            report_id=report_id,
+            queued_date=queued_date,
+        )
+        return
     except report.ReportFailedException as e:
         g.log.error(e)
 
@@ -285,7 +295,16 @@ def _handle_daily_link_report(link_id, report_id, queued_date):
         report_result = report.fetch_report(report_id)
     except report.ReportPendingException as e:
         time.sleep(1)
-        raise
+
+        # send to the back of the queue
+        g.log.warning("link report still pending, sending to the back of the queue (%s/%s)" %
+            (link._fullname, report_id))
+        _trigger_link_report(
+            link=link,
+            report_id=report_id,
+            queued_date=queued_date,
+        )
+        return
     except report.ReportFailedException as e:
         g.log.error(e)
 
