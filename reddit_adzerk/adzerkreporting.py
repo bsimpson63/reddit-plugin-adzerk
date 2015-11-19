@@ -177,7 +177,10 @@ def _get_flight_id(report_fragment):
 def _handle_generate_daily_link_report(link_id):
     now = datetime.utcnow()
     link = Link._byID(link_id, data=True)
-    campaigns = PromoCampaign._by_link(link._id)
+    campaigns = list(PromoCampaign._by_link(link._id))
+
+    if not campaigns:
+        return
 
     link_start = min([promo.start_date for promo in campaigns])
     link_end = max([promo.end_date for promo in campaigns])
