@@ -70,6 +70,7 @@ def queue_promo_reports():
 
 
 def _generate_link_report(link):
+    g.log.info("queuing report for link %s" % link._fullname)
     amqp.add_item("adzerk_reporting_q", json.dumps({
         "action": "generate_daily_link_report",
         "link_id": link._id,
@@ -77,6 +78,7 @@ def _generate_link_report(link):
 
 
 def _generate_promo_report(campaign):
+    g.log.info("queuing report for campaign %s" % campaign._fullname)
     amqp.add_item("adzerk_reporting_q", json.dumps({
         "action": "generate_lifetime_campaign_report",
         "campaign_id": campaign._id,
@@ -84,6 +86,7 @@ def _generate_promo_report(campaign):
 
 
 def _trigger_link_report(link, report_id, queued_date):
+    g.log.info("trigger processing for link (%s/%s)" % (link._fullname, report_id))
     amqp.add_item("adzerk_reporting_q", json.dumps({
         "action": "daily_link_report",
         "link_id": link._id,
@@ -93,6 +96,7 @@ def _trigger_link_report(link, report_id, queued_date):
 
 
 def _trigger_campaign_report(campaign, report_id, queued_date):
+    g.log.info("trigger processing for campaign (%s/%s)" % (campaign._fullname, report_id))
     amqp.add_item("adzerk_reporting_q", json.dumps({
         "action": "lifetime_campaign_report",
         "campaign_id": campaign._id,
@@ -247,6 +251,8 @@ def _handle_generate_lifetime_campaign_report(campaign_id):
 def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
     campaign = PromoCampaign._byID(campaign_id, data=True)
 
+    g.log.info("processing report for campaign (%s/%s)" % (campaign._fullname, report_id))
+
     try:
         report_result = report.fetch_report(report_id)
     except report.ReportPendingException as e:
@@ -272,6 +278,8 @@ def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
 
 def _handle_daily_link_report(link_id, report_id, queued_date):
     link = Link._byID(link_id, data=True)
+
+    g.log.info("processing report for link (%s/%s)" % (link._fullname, report_id))
 
     try:
         report_result = report.fetch_report(report_id)
