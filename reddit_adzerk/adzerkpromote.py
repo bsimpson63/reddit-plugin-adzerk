@@ -598,7 +598,8 @@ def delete_campaign(link, campaign):
 
 
 def is_overdelivered(campaign):
-    if campaign.cost_basis != promo.PROMOTE_COST_BASIS.fixed_cpm:
+    if (campaign.cost_basis != promo.PROMOTE_COST_BASIS.fixed_cpm or
+            campaign.is_house):
         return False
 
     billable_impressions = promote.get_billable_impressions(campaign)
