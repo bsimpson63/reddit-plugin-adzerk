@@ -63,6 +63,9 @@ DELCHARS = ''.join(c for c in map(chr, range(256)) if not (c.isalnum() or c.issp
 
 FREQ_CAP_TYPE = Enum(None, "hour", "day")
 
+EVENT_TYPE_UPVOTE = 10
+EVENT_TYPE_DOWNVOTE = 11
+
 RATE_TYPE_BY_COST_BASIS = {
     promo.PROMOTE_COST_BASIS.fixed_cpm: 2,
     promo.PROMOTE_COST_BASIS.cpm: 2,
@@ -635,8 +638,17 @@ def process_adzerk():
 
     amqp.consume_items('adzerk_q', _handle_adzerk, verbose=False)
 
-AdzerkResponse = namedtuple('AdzerkResponse',
-                    ['link', 'campaign', 'target', 'imp_pixel', 'click_url'])
+AdzerkResponse = namedtuple(
+    'AdzerkResponse', [
+        'link',
+        'campaign',
+        'target',
+        'imp_pixel',
+        'click_url',
+        'upvote_pixel',
+        'downvote_pixel',
+    ],
+)
 
 class AdserverResponse(object):
     def __init__(self, body):
@@ -653,7 +665,8 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
           "divName": div,
           "networkId": g.az_selfserve_network_id,
           "siteId": g.az_selfserve_site_ids[platform],
-          "adTypes": [LEADERBOARD_AD_TYPE]
+          "adTypes": [LEADERBOARD_AD_TYPE],
+          "eventIds": [EVENT_TYPE_UPVOTE, EVENT_TYPE_DOWNVOTE],
         }
         placements.append(placement)
 
@@ -724,6 +737,9 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         adzerk_flight_id = decision['flightId']
         imp_pixel = decision['impressionUrl']
         click_url = decision['clickUrl']
+        events_by_id = {event["id"]: event["url"] for event in decision["events"]}
+        upvote_pixel = events_by_id[EVENT_TYPE_UPVOTE]
+        downvote_pixel = events_by_id[EVENT_TYPE_DOWNVOTE]
 
         campaign = PromoCampaignByFlightIdCache.get(adzerk_flight_id)
 
@@ -740,7 +756,15 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         body = json.loads(decision['contents'][0]['body'])
         link = body['link']
         target = body['target']
-        res.append(AdzerkResponse(link, campaign, target, imp_pixel, click_url))
+        res.append(AdzerkResponse(
+            link=link,
+            campaign=campaign,
+            target=target,
+            imp_pixel=imp_pixel,
+            click_url=click_url,
+            upvote_pixel=upvote_pixel,
+            downvote_pixel=downvote_pixel,
+        ))
     return res
 
 
@@ -806,6 +830,8 @@ class AdzerkApiController(api.ApiController):
             up = UrlParser(r.imp_pixel)
             up.hostname = "pixel.redditmedia.com"
             w.adserver_imp_pixel = up.unparse()
+            w.adserver_upvote_pixel = r.upvote_pixel
+            w.adserver_downvote_pixel = r.downvote_pixel
             w.adserver_click_url = r.click_url
             w.num = ""
             return responsive(w.render(), space_compress=True)
