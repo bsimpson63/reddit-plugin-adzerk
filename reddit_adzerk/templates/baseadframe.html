@@ -52,7 +52,8 @@ ${self.content()}
         var frame = ${scriptsafe_dumps(frame)};
         var placement = ${scriptsafe_dumps(placement)};
 
-        if (window.parent.frames[frame].ados_ads) {
+        if (window.parent.frames[frame].ados_ads &&
+            window.parent.frames[frame].ados_ads[placement]) {
           clearInterval(timeout);
 
           var id = window.parent.frames[frame].ados_ads[placement].id;
