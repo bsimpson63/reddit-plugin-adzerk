@@ -482,12 +482,13 @@ def _insert_daily_campaign_reporting(
         subreddit=subreddit,
     )
 
+    # store spent in pennies since these tables use integers
     spent_row = AdserverTargetedSpentByCodename(
         codename=codename,
         date=date,
         interval="day",
-        unique_count=spent,
-        pageview_count=spent,
+        unique_count=spent * 100,
+        pageview_count=spent * 100,
         subreddit=subreddit,
     )
 
