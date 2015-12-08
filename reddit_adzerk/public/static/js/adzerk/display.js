@@ -33,6 +33,35 @@
 
   var config = getConfig();
 
+  // Display a random image in lieu of an ad for certain keywords.
+  // This reduces the number of ad requests for low-fill targets.
+  if (global.SKIP_AD_PROBABILITY && Math.random() <= global.SKIP_AD_PROBABILITY) {
+    var keywords = config.keywords ? config.keywords : [];
+    var skipAd = false;
+
+    if (global.SKIP_AD_KEYWORDS && keywords) {
+      for (var keyword in keywords) {
+        if ($.inArray(keyword, global.SKIP_AD_KEYWORDS)) {
+          skipAd = true;
+          break;
+        }
+      }
+    }
+
+    if (skipAd) {
+      var adframe = document.getElementById('main');
+      var img = document.createElement('img');
+      var randomImgIndex = Math.floor(Math.random() * global.SKIP_AD_IMAGES.length);
+      img.height = 250;
+      img.width = 300;
+      img.src = global.SKIP_AD_IMAGES[randomImgIndex];
+
+      adframe.appendChild(img);
+
+      return;
+    }
+  }
+
   ados.run.push(function() {
     ados.isAsync = true;
 

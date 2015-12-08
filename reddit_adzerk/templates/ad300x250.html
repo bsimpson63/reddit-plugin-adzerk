@@ -1,11 +1,24 @@
 <%!
    from r2.lib import js
-   from r2.lib.filters import unsafe
+   from r2.lib.filters import (
+     scriptsafe_dumps,
+     unsafe,
+   )
+   from r2.lib.template_helpers import static
 %>
 <%inherit file="baseadframe.html"/>
 
 <%def name="content()">
   <div id="main"></div>
+  <script>
+    window.SKIP_AD_PROBABILITY = ${scriptsafe_dumps(g.display_ad_skip_probability)};
+    window.SKIP_AD_KEYWORDS = ${scriptsafe_dumps(g.display_ad_skip_keywords)};
+    window.SKIP_AD_IMAGES = [
+      ${scriptsafe_dumps(static("adblock-1.png"))},
+      ${scriptsafe_dumps(static("adblock-2.png"))},
+      ${scriptsafe_dumps(static("adblock-3.jpg"))},
+    ];
+  </script>
   ${unsafe(js.use("display"))}
   ${self.discuss("ad_main", "main")}
 </%def>

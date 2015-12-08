@@ -20,6 +20,14 @@ class Adzerk(Plugin):
             'az_reporting_timeout',
         ],
 
+        ConfigValue.float: [
+            'display_ad_skip_probability',
+        ],
+
+        ConfigValue.tuple: [
+            'display_ad_skip_keywords',
+        ],
+
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
             'az_selfserve_priorities',
             'az_selfserve_site_ids',
