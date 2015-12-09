@@ -14,7 +14,9 @@ from r2.controllers.reddit_base import (
 from r2.lib import promote
 from r2.lib.pages import Ads as BaseAds
 from r2.lib.wrapped import Templated
-from r2.models.subreddit import DefaultSR
+from r2.models.subreddit import (
+    Frontpage,
+)
 
 FRONTPAGE_NAME = "-reddit.com"
 
@@ -22,18 +24,18 @@ class Ads(BaseAds):
     def __init__(self):
         BaseAds.__init__(self)
 
-        site_name = getattr(c.site, "analytics_name", c.site.name)
+        keywords = promote.keywords_from_context(
+            c.user, c.site,
+            include_subscriptions=False,
+            live_promos_only=False,
+        )
 
         # adzerk reporting is easier when not using a space in the tag
-        if isinstance(c.site, DefaultSR):
-            site_name = FRONTPAGE_NAME
+        if Frontpage.name in keywords:
+            keywords = keywords - {Frontpage.name} | {FRONTPAGE_NAME}
 
-        sr = quote(site_name.lower())
         data = {
-            "keywords": ",".join([
-                sr,
-                "loggedin" if c.user_is_loggedin else "loggedout",
-            ]),
+            "keywords": list(keywords),
             "origin": c.request_origin,
         }
 
