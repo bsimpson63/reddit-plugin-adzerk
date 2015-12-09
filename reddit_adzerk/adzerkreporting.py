@@ -34,10 +34,10 @@ from r2.models.traffic import (
     engine,
     AdserverClickthroughsByCodename,
     AdserverImpressionsByCodename,
-    AdserverSpentByCodename,
+    AdserverSpentPenniesByCodename,
     AdserverTargetedClickthroughsByCodename,
     AdserverTargetedImpressionsByCodename,
-    AdserverTargetedSpentByCodename,
+    AdserverTargetedSpentPenniesByCodename,
 )
 
 from reddit_adzerk import (
@@ -345,7 +345,7 @@ def _handle_daily_link_report(link_id, report_id, queued_date):
             date=date,
             impressions=impressions,
             clicks=clicks,
-            spent=spent,
+            spent_pennies=spent * 100.,
         )
 
         for detail in record.get("Details", []):
@@ -371,7 +371,7 @@ def _handle_daily_link_report(link_id, report_id, queued_date):
                 date=date,
                 impressions=impressions,
                 clicks=clicks,
-                spent=spent,
+                spent_pennies=spent * 100.,
                 subreddit=campaign.target_name,
             )
 
@@ -414,7 +414,7 @@ def process_report_q():
 
 def _insert_daily_link_reporting(
         codename, date, impressions,
-        clicks, spent):
+        clicks, spent_pennies):
 
     date = date.replace(
         hour=0,
@@ -439,12 +439,12 @@ def _insert_daily_link_reporting(
         pageview_count=impressions,
     )
 
-    spent_row = AdserverSpentByCodename(
+    spent_row = AdserverSpentPenniesByCodename(
         codename=codename,
         date=date,
         interval="day",
-        unique_count=spent,
-        pageview_count=spent,
+        unique_count=spent_pennies,
+        pageview_count=spent_pennies,
     )
 
     Session.merge(clicks_row)
@@ -455,7 +455,7 @@ def _insert_daily_link_reporting(
 
 def _insert_daily_campaign_reporting(
         codename, date, impressions,
-        clicks, spent, subreddit=None):
+        clicks, spent_pennies, subreddit=None):
 
     date = date.replace(
         hour=0,
@@ -482,12 +482,12 @@ def _insert_daily_campaign_reporting(
         subreddit=subreddit,
     )
 
-    spent_row = AdserverTargetedSpentByCodename(
+    spent_row = AdserverTargetedSpentPenniesByCodename(
         codename=codename,
         date=date,
         interval="day",
-        unique_count=spent,
-        pageview_count=spent,
+        unique_count=spent_pennies,
+        pageview_count=spent_pennies,
         subreddit=subreddit,
     )
 
