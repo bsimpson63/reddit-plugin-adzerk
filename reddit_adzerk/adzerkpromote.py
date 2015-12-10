@@ -75,6 +75,8 @@ GOAL_TYPE_BY_COST_BASIS = {
     promo.PROMOTE_COST_BASIS.cpc: 2,
 }
 
+FREQUENCY_CAP_DURATION_HOURS = 24
+
 def sanitize_text(text):
     return _force_utf8(text).translate(None, DELCHARS)
 
@@ -285,10 +287,10 @@ def update_flight(link, campaign, az_campaign):
                      not (campaign._deleted or campaign_overdelivered)),
     }
 
-    if campaign.frequency_cap and campaign.frequency_cap_duration:
+    if campaign.frequency_cap:
         d.update({'IsFreqCap': True,
                   'FreqCap': campaign.frequency_cap,
-                  'FreqCapDuration': campaign.frequency_cap_duration,
+                  'FreqCapDuration': FREQUENCY_CAP_DURATION_HOURS,
                   'FreqCapType': FREQ_CAP_TYPE.hour})
     else:
         d['IsFreqCap'] = None
