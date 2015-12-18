@@ -40,8 +40,8 @@
     var skipAd = false;
 
     if (global.SKIP_AD_KEYWORDS && keywords) {
-      for (var keyword in keywords) {
-        if ($.inArray(keyword, global.SKIP_AD_KEYWORDS)) {
+      for (var i = 0; i < keywords.length; i++) {
+        if ($.inArray(keywords[i], global.SKIP_AD_KEYWORDS)) {
           skipAd = true;
           break;
         }
