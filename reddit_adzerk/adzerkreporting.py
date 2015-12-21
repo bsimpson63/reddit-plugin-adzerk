@@ -5,14 +5,15 @@ Runs link reports by day, by campaign, and stores in traffic db.
 Runs campaign reports for lifetime impression, clicks, and spend.
 
 A cron job is used to queue reports for promos that are currently
-serving, or served the day before.  The queue first makes all the
-requests to generate the reports before trying to retrieve any.
-This should give enough time for the first report to finish and
-be available by the time reading begins.
+serving, or served the day before.  The queue blocks until a
+report can be retrived until moving on to the next item.  If a
+report is pending for more than `az_reporting_timeout` it is
+assumed to have failed and is generated.
 """
 
 import itertools
 import json
+import math
 import pytz
 import time
 from collections import defaultdict
@@ -45,6 +46,7 @@ from reddit_adzerk import (
     report,
 )
 
+RETRY_SLEEP_SECONDS = 3
 
 Session = scoped_session(sessionmaker(bind=engine))
 
@@ -82,26 +84,6 @@ def _generate_promo_report(campaign):
     amqp.add_item("adzerk_reporting_q", json.dumps({
         "action": "generate_lifetime_campaign_report",
         "campaign_id": campaign._id,
-    }))
-
-
-def _trigger_link_report(link, report_id, queued_date):
-    g.log.info("trigger processing for link (%s/%s)" % (link._fullname, report_id))
-    amqp.add_item("adzerk_reporting_q", json.dumps({
-        "action": "daily_link_report",
-        "link_id": link._id,
-        "report_id": report_id,
-        "queued_date": queued_date.isoformat(),
-    }))
-
-
-def _trigger_campaign_report(campaign, report_id, queued_date):
-    g.log.info("trigger processing for campaign (%s/%s)" % (campaign._fullname, report_id))
-    amqp.add_item("adzerk_reporting_q", json.dumps({
-        "action": "lifetime_campaign_report",
-        "campaign_id": campaign._id,
-        "report_id": report_id,
-        "queued_date": queued_date.isoformat(),
     }))
 
 
@@ -208,6 +190,8 @@ def _handle_generate_daily_link_report(link_id):
 
     end = min([now, link_end])
 
+    g.log.info("generating report for link %s" % link._fullname)
+
     report_id = report.queue_report(
         start=start,
         end=end,
@@ -217,11 +201,22 @@ def _handle_generate_daily_link_report(link_id):
         }],
     )
 
-    _trigger_link_report(
-        link=link,
-        report_id=report_id,
-        queued_date=now,
-    )
+    g.log.info("processing report for link (%s/%s)" %
+        (link._fullname, report_id))
+
+    try:
+        _process_daily_link_report(
+            link=link,
+            report_id=report_id,
+            queued_date=now,
+        )
+
+        g.log.info("successfully processed report for link (%s/%s)" %
+            (link._fullname, report_id))
+    except report.ReportFailedException as e:
+        g.log.error(e)
+        # retry if report failed
+        _generate_link_report(link)
 
 
 def _handle_generate_lifetime_campaign_report(campaign_id):
@@ -233,6 +228,8 @@ def _handle_generate_lifetime_campaign_report(campaign_id):
 
     end = min([now, end])
 
+    g.log.info("generating report for campaign %s" % campaign._fullname)
+
     report_id = report.queue_report(
         start=start,
         end=end,
@@ -241,47 +238,49 @@ def _handle_generate_lifetime_campaign_report(campaign_id):
         }],
     )
 
-    _trigger_campaign_report(
-        campaign=campaign,
-        report_id=report_id,
-        queued_date=now,
-    )
-
-
-def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
-    campaign = PromoCampaign._byID(campaign_id, data=True)
-
-    g.log.info("processing report for campaign (%s/%s)" % (campaign._fullname, report_id))
-
     try:
-        report_result = report.fetch_report(report_id)
-    except report.ReportPendingException as e:
-        timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
-            timedelta(seconds=g.az_reporting_timeout))
+        _process_lifetime_campaign_report(
+            campaign=campaign,
+            report_id=report_id,
+            queued_date=now,
+        )
 
-        if queued_date < timeout:
-            g.log.warning("campaign report timed out, retrying (%s/%s)" %
-                (campaign._fullname, report_id))
-
-            _generate_promo_report(campaign)
-        else:
-            g.log.warning("campaign report still pending, sending to the back of the queue (%s/%s)" %
-                (campaign._fullname, report_id))
-
-            time.sleep(1)
-
-            _trigger_campaign_report(
-                campaign=campaign,
-                report_id=report_id,
-                queued_date=queued_date,
-            )
-        return
+        g.log.info("successfully processed report for campaign (%s/%s)" %
+            (campaign._fullname, report_id))
     except report.ReportFailedException as e:
         g.log.error(e)
-
         # retry if report failed
         _generate_promo_report(campaign)
-        return
+
+
+def _process_lifetime_campaign_report(campaign, report_id, queued_date):
+    """
+    Processes report for the lifetime of the campaign.
+
+    Exponentially backs off on retries, throws on timeout.
+    """
+
+    attempt = 1
+
+    while True:
+        try:
+            report_result = report.fetch_report(report_id)
+            break
+        except report.ReportPendingException as e:
+            timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
+                timedelta(seconds=g.az_reporting_timeout))
+
+            if queued_date < timeout:
+                raise report.ReportFailedException("campign report timed out (%s/%s)" %
+                    (campaign._fullname, report_id))
+            else:
+                sleep_time = math.pow(RETRY_SLEEP_SECONDS, attempt)
+                attempt = attempt + 1
+
+                g.log.warning("campaign report still pending, retrying in %d seconds (%s/%s)" %
+                    (RETRY_SLEEP_SECONDS, campaign._fullname, report_id))
+
+                time.sleep(sleep_time)
 
     impressions, clicks, spent = _get_total_usage(report_result)
 
@@ -294,40 +293,34 @@ def _handle_lifetime_campaign_report(campaign_id, report_id, queued_date):
     campaign._commit()
 
 
-def _handle_daily_link_report(link_id, report_id, queued_date):
-    link = Link._byID(link_id, data=True)
+def _process_daily_link_report(link, report_id, queued_date):
+    """
+    Processes report grouped by day and flight.
 
-    g.log.info("processing report for link (%s/%s)" % (link._fullname, report_id))
+    Exponentially backs off on retries, throws on timeout.
+    """
 
-    try:
-        report_result = report.fetch_report(report_id)
-    except report.ReportPendingException as e:
-        timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
-            timedelta(seconds=g.az_reporting_timeout))
+    attempt = 1
 
-        if queued_date < timeout:
-            g.log.warning("link report timed out, retrying (%s/%s)" %
-                (link._fullname, report_id))
+    while True:
+        try:
+            report_result = report.fetch_report(report_id)
+            break
+        except report.ReportPendingException as e:
+            timeout = (datetime.utcnow().replace(tzinfo=pytz.utc) -
+                timedelta(seconds=g.az_reporting_timeout))
 
-            _generate_link_report(link)
-        else:
-            g.log.warning("link report still pending, sending to the back of the queue (%s/%s)" %
-                (link._fullname, report_id))
+            if queued_date < timeout:
+                raise report.ReportFailedException("link report timed out (%s/%s)" %
+                    (link._fullname, report_id))
+            else:
+                sleep_time = math.pow(RETRY_SLEEP_SECONDS, attempt)
+                attempt = attempt + 1
 
-            time.sleep(1)
+                g.log.warning("link report still pending, retrying in %d seconds (%s/%s)" %
+                    (RETRY_SLEEP_SECONDS, link._fullname, report_id))
 
-            _trigger_link_report(
-                link=link,
-                report_id=report_id,
-                queued_date=queued_date,
-            )
-        return
-    except report.ReportFailedException as e:
-        g.log.error(e)
-
-        # retry if report failed
-        _generate_link_report(link)
-        return
+                time.sleep(sleep_time)
 
     g.log.debug(report_result)
 
@@ -386,19 +379,7 @@ def process_report_q():
         data = json.loads(message.body)
         action = data.get("action")
 
-        if action == "daily_link_report":
-            _handle_daily_link_report(
-                link_id=data.get("link_id"),
-                report_id=data.get("report_id"),
-                queued_date=parse_date(data.get("queued_date")),
-            )
-        elif action == "lifetime_campaign_report":
-            _handle_lifetime_campaign_report(
-                campaign_id=data.get("campaign_id"),
-                report_id=data.get("report_id"),
-                queued_date=parse_date(data.get("queued_date")),
-            )
-        elif action == "generate_daily_link_report":
+        if action == "generate_daily_link_report":
             _handle_generate_daily_link_report(
                 link_id=data.get("link_id"),
             )
