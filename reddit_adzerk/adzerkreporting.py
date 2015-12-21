@@ -381,7 +381,7 @@ def _handle_daily_link_report(link_id, report_id, queued_date):
 
 
 def process_report_q():
-    @g.stats.amqp_processor('adzerk_q')
+    @g.stats.amqp_processor('adzerk_reporting_q')
     def _processor(message):
         data = json.loads(message.body)
         action = data.get("action")
