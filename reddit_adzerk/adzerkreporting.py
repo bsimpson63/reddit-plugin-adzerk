@@ -185,6 +185,11 @@ def _handle_generate_daily_link_report(link_id):
             link_start,
         ])
 
+        # in cases where we may be running a report well after a link
+        # has completed ensure we always use the actual start.
+        if start > link_end:
+            start = link_start
+
     else:
         start = link_start
 
