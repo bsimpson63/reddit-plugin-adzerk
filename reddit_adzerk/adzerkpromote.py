@@ -661,7 +661,7 @@ class AdserverResponse(object):
 
 
 def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
-                   platform="desktop"):
+                   platform="desktop", is_refresh=False):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
 
@@ -675,9 +675,10 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         }
         placements.append(placement)
 
+    keywords = [word.lower() for word in keywords]
     data = {
         "placements": placements,
-        "keywords": [word.lower() for word in keywords],
+        "keywords": keywords,
         "ip": request.ip,
     }
 
@@ -702,6 +703,18 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
 
     timer = g.stats.get_timer("providers.adzerk")
     timer.start()
+
+    for placement in placements:
+        g.ad_events.ad_request(
+            keywords=keywords,
+            platform=platform,
+            placement_name=placement["divName"],
+            placement_types=placement["adTypes"],
+            is_refresh=is_refresh,
+            subreddit=c.site,
+            request=request,
+            context=c,
+        )
 
     try:
         r = requests.post(url, data=json.dumps(data), headers=headers,
@@ -728,17 +741,33 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
     if not decisions:
         return None
 
+    placements_by_div = {placement["divName"]: placement
+        for placement in placements}
+
     res = []
     for div in divs:
         decision = decisions[div]
         if not decision:
             continue
 
+        placement = placements_by_div[div]
+        ad_id = decision['adId']
+
         # adserver ads are not reddit links, we return the body
         if decision['campaignId'] in g.adserver_campaign_ids:
+            g.ad_events.ad_response(
+                keywords=keywords,
+                platform=platform,
+                placement_name=div,
+                placement_types=placement["adTypes"],
+                ad_id=ad_id,
+                subreddit=c.site,
+                request=request,
+                context=c,
+            )
+
             return AdserverResponse(decision['contents'][0]['body'])
 
-        adzerk_campaign_id = decision['campaignId']
         adzerk_flight_id = decision['flightId']
         imp_pixel = decision['impressionUrl']
         click_url = decision['clickUrl']
@@ -747,8 +776,27 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         downvote_pixel = events_by_id[EVENT_TYPE_DOWNVOTE]
 
         campaign = PromoCampaignByFlightIdCache.get(adzerk_flight_id)
+        contents = decision['contents'][0]
+        body = json.loads(contents['body'])
+        link = body['link']
+        target = body['target']
+
+        g.ad_events.ad_response(
+            keywords=keywords,
+            platform=platform,
+            placement_name=div,
+            placement_types=placement["adTypes"],
+            ad_id=ad_id,
+            subreddit=c.site,
+            link_id=link,
+            campaign_id=campaign,
+            request=request,
+            context=c,
+        )
 
         if not campaign:
+            adzerk_campaign_id = decision['campaignId']
+
             g.stats.simple_event('adzerk.request.orphaned_flight')
             g.log.error('adzerk_request: couldn\'t find campaign for flight (az campaign: %s, flight: %s)',
                 adzerk_campaign_id, adzerk_flight_id)
@@ -758,9 +806,6 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             deactivate_orphaned_flight(adzerk_flight_id)
             continue
 
-        body = json.loads(decision['contents'][0]['body'])
-        link = body['link']
-        target = body['target']
         res.append(AdzerkResponse(
             link=link,
             campaign=campaign,
@@ -803,7 +848,7 @@ class AdzerkApiController(api.ApiController):
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
         response = adzerk_request(srnames, self.get_uid(loid),
-                                  platform=platform)
+                                  platform=platform, is_refresh=is_refresh)
 
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')

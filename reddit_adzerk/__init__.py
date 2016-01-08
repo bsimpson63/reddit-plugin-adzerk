@@ -1,6 +1,8 @@
 import json
 import pkg_resources
 
+from pylons import app_globals as g
+
 from r2.lib.plugin import Plugin
 from r2.lib.configparse import ConfigValue
 from r2.lib.js import Module
@@ -22,6 +24,7 @@ class Adzerk(Plugin):
 
         ConfigValue.float: [
             'display_ad_skip_probability',
+            'events_collector_ad_serving_sample_rate',
         ],
 
         ConfigValue.tuple: [
@@ -72,7 +75,11 @@ class Adzerk(Plugin):
         # replace the standard Ads view with an Adzerk specific one.
         import r2.lib.pages.pages
         from adzerkads import Ads as AdzerkAds
+        from lib.events import AdEventQueue
+
         r2.lib.pages.pages.Ads = AdzerkAds
+
+        g.ad_events = AdEventQueue()
 
         # replace standard adserver with Adzerk.
         from adzerkpromote import AdzerkApiController
