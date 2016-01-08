@@ -14,11 +14,6 @@ from r2.controllers.reddit_base import (
 from r2.lib import promote
 from r2.lib.pages import Ads as BaseAds
 from r2.lib.wrapped import Templated
-from r2.models.subreddit import (
-    Frontpage,
-)
-
-FRONTPAGE_NAME = "-reddit.com"
 
 class Ads(BaseAds):
     def __init__(self):
@@ -29,10 +24,6 @@ class Ads(BaseAds):
             include_subscriptions=False,
             live_promos_only=False,
         )
-
-        # adzerk reporting is easier when not using a space in the tag
-        if Frontpage.name in keywords:
-            keywords = keywords - {Frontpage.name} | {FRONTPAGE_NAME}
 
         data = {
             "keywords": list(keywords),
