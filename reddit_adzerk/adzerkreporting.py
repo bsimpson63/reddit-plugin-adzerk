@@ -70,6 +70,8 @@ def queue_promo_reports():
             _generate_promo_report(campaign)
             already_processed_campaigns.add(campaign._id36)
 
+    amqp.worker.join()
+
 
 def _generate_link_report(link):
     g.log.info("queuing report for link %s" % link._fullname)
