@@ -24,7 +24,6 @@ class Adzerk(Plugin):
 
         ConfigValue.float: [
             'display_ad_skip_probability',
-            'events_collector_ad_serving_sample_rate',
         ],
 
         ConfigValue.tuple: [
@@ -39,6 +38,14 @@ class Adzerk(Plugin):
         ConfigValue.tuple_of(ConfigValue.int): [
             'adserver_campaign_ids',
         ],
+    }
+
+    live_config = {
+
+        ConfigValue.float: [
+            'events_collector_ad_serving_sample_rate',
+        ],
+
     }
 
     js = {
