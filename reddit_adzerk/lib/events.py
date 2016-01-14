@@ -5,6 +5,7 @@ from r2.lib.eventcollector import (
     Event,
     squelch_exceptions,
 )
+from r2.lib.utils import sampled
 from r2.models import (
     FakeSubreddit,
 )
