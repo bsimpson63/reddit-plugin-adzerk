@@ -22,8 +22,13 @@ from r2.lib import (
     organic,
     promote,
 )
+from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db.sorts import epoch_seconds
+from r2.lib.errors import (
+    errors,
+    reddit_http_error,
+)
 from r2.lib.filters import _force_utf8
 from r2.lib.pages import responsive
 from r2.lib.pages.things import default_thing_wrapper
@@ -52,6 +57,9 @@ from r2.models import (
 from r2.models import promo
 
 from reddit_adzerk.lib.cache import PromoCampaignByFlightIdCache
+from reddit_adzerk.lib.validator import (
+    VSite,
+)
 
 hooks = HookRegistrar()
 
@@ -823,6 +831,7 @@ class AdzerkApiController(api.ApiController):
     @csrf_exempt
     @allow_oauth2_access
     @validate(
+        site=VSite("site", required=False, default=None),
         srnames=VPrintable("srnames", max_length=2100),
         is_mobile_web=VBoolean('is_mobile_web'),
         platform=VOneOf("platform", [
@@ -833,21 +842,28 @@ class AdzerkApiController(api.ApiController):
         loid=nop('loid', None),
         is_refresh=VBoolean("is_refresh", default=False),
     )
-    def POST_request_promo(self, srnames, is_mobile_web, platform, loid, is_refresh):
+    def POST_request_promo(self, site, srnames, is_mobile_web, platform, loid, is_refresh):
         self.OPTIONS_request_promo()
 
-        if not srnames:
+        if (errors.INVALID_SITE_PATH, "site") in c.errors:
+            return abort(reddit_http_error(400, errors.INVALID_SITE_PATH))
+
+        if site:
+            keywords = promote.keywords_from_context(
+                c.user, site,
+            )
+        elif srnames:
+            keywords = srnames.split('+')
+        else:
             return
 
         # backwards compat
         if platform is None:
             platform = "mobile_web" if is_mobile_web else "desktop"
 
-        srnames = srnames.split('+')
-
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
-        response = adzerk_request(srnames, self.get_uid(loid),
+        response = adzerk_request(keywords, self.get_uid(loid),
                                   platform=platform, is_refresh=is_refresh)
 
         if not response:

@@ -2,6 +2,7 @@ import json
 import pkg_resources
 
 from pylons import app_globals as g
+from pylons.i18n import N_
 
 from r2.lib.plugin import Plugin
 from r2.lib.configparse import ConfigValue
@@ -10,6 +11,11 @@ from r2.lib.js import Module
 
 class Adzerk(Plugin):
     needs_static_build = True
+
+    errors = {
+        "INVALID_SITE_PATH":
+            N_("invalid site path/name"),
+    }
 
     config = {
         ConfigValue.str: [
