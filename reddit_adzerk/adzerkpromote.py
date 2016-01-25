@@ -2,7 +2,6 @@ from collections import namedtuple
 import datetime
 import json
 import math
-import random
 import re
 import string
 from urllib import quote
@@ -904,12 +903,6 @@ class AdzerkApiController(api.ApiController):
             return responsive(w.render(), space_compress=True)
         else:
             g.stats.simple_event('adzerk.request.skip_promo')
-
-            # TEMP: Log 1% of promo skips.
-            if random.random() <= 0.01:
-                # We only ever request 1 ad, so just grab the first
-                # response.
-                g.log.info("skipping promo: %s" % response[0].campaign)
 
     def get_uid(self, loid):
         if c.user_is_loggedin:
