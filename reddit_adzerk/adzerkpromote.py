@@ -338,7 +338,7 @@ def update_flight(link, campaign, az_campaign):
             # things from underdelivering.
             d.update({
                 'CapType': 4,
-                'DailyCapAmount': int(math.ceil(total_budget_dollars / campaign.ndays)),
+                'DailyCapAmount': int(math.ceil(total_budget_dollars / max(campaign.ndays, 1))),
                 'LifetimeCapAmount': int(math.ceil(total_budget_dollars)),
             })
 
