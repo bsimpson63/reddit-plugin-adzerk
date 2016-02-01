@@ -10,7 +10,6 @@ from r2.models.promo import Location
 from r2.models.promo_metrics import LocationPromoMetrics
 from r2.models.subreddit import Frontpage
 
-from reddit_adzerk.adzerkads import FRONTPAGE_NAME
 from reddit_adzerk import adzerk_api
 
 # https://github.com/adzerk/adzerk-api/wiki/Reporting-API
@@ -26,6 +25,7 @@ ReportItem = namedtuple('ReportItem', ['start', 'end', 'impressions', 'clicks'])
 ReportTuple = namedtuple('ReportTuple', ['date', 'impressions', 'clicks'])
 
 AZ_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+FRONTPAGE_NAME = "-reddit.com"
 
 
 class ReportPendingException(Exception):
