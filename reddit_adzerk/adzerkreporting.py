@@ -285,7 +285,7 @@ def _process_lifetime_campaign_report(campaign, report_id, queued_date):
                 attempt = attempt + 1
 
                 g.log.warning("campaign report still pending, retrying in %d seconds (%s/%s)" %
-                    (RETRY_SLEEP_SECONDS, campaign._fullname, report_id))
+                    (sleep_time, campaign._fullname, report_id))
 
                 time.sleep(sleep_time)
 
@@ -332,7 +332,7 @@ def _process_daily_link_report(link, report_id, queued_date):
                 attempt = attempt + 1
 
                 g.log.warning("link report still pending, retrying in %d seconds (%s/%s)" %
-                    (RETRY_SLEEP_SECONDS, link._fullname, report_id))
+                    (sleep_time, link._fullname, report_id))
 
                 time.sleep(sleep_time)
 
