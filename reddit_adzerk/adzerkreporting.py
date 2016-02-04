@@ -300,6 +300,13 @@ def _process_lifetime_campaign_report(campaign, report_id, queued_date):
     campaign._commit()
 
 
+def _reporting_factory():
+    return dict(
+        impressions=0,
+        clicks=0,
+        spent_pennies=0,
+    )
+
 def _process_daily_link_report(link, report_id, queued_date):
     """
     Processes report grouped by day and flight.
@@ -348,6 +355,7 @@ def _process_daily_link_report(link, report_id, queued_date):
             spent_pennies=spent * 100.,
         )
 
+        campaign_details = defaultdict(_reporting_factory)
         for detail in record.get("Details", []):
             campaign_fullname = _get_fullname(PromoCampaign, detail)
 
@@ -366,13 +374,18 @@ def _process_daily_link_report(link, report_id, queued_date):
 
             impressions, clicks, spent = _get_usage(detail)
 
+            # if the price changes then there may be multiple records for each campaign/date.
+            values = campaign_details[(campaign, date)]
+            values["impressions"] = values["impressions"] + impressions
+            values["clicks"] = values["clicks"] + clicks
+            values["spent_pennies"] = values["spent_pennies"] + (spent * 100.)
+
+        for (campaign, date), values in campaign_details.iteritems():
             _insert_daily_campaign_reporting(
                 codename=campaign._fullname,
                 date=date,
-                impressions=impressions,
-                clicks=clicks,
-                spent_pennies=spent * 100.,
                 subreddit=campaign.target_name,
+                **values
             )
 
     link.last_daily_report = report_id
