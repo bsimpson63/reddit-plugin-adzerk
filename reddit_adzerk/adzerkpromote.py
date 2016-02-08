@@ -284,11 +284,18 @@ def update_flight(link, campaign, az_campaign):
         # start time must be before end time
         delayed_start = campaign.start_date
 
-    keywords = campaign.target.subreddit_names
+    keywords = set(campaign.target.subreddit_names)
+
+    targets_frontpage = Frontpage.name in keywords
+
+    if targets_frontpage:
+        keywords.remove(Frontpage.name)
 
     # Don't allow nsfw links to show up on the frontpage
     if link.over_18:
-        keywords.append('!' + Frontpage.name)
+        keywords.add("!s.frontpage")
+    elif targets_frontpage:
+        keywords.add("s.frontpage")
 
     d = {
         'StartDate': date_to_adzerk(delayed_start),
@@ -296,7 +303,7 @@ def update_flight(link, campaign, az_campaign):
         'OptionType': 1, # 1: CPM, 2: Remainder
         'IsUnlimited': False,
         'IsFullSpeed': False,
-        'Keywords': '\n'.join(keywords),
+        'Keywords': '\n'.join(list(keywords)),
         'CampaignId': az_campaign.Id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
