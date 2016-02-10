@@ -202,8 +202,8 @@ def update_creative(link, az_advertiser):
 
     # as long as there are no 3rd party trackers for the link
     # it's DNT compliant.
-    DNT_compliant = (not (hasattr(link, 'third_party_tracking_url') or
-        hasattr(link, 'third_party_tracking_url_2')))
+    DNT_compliant = (link.third_party_tracking is None and
+        link.third_party_tracking_2 is None)
 
     d = {
         'Body': title,
