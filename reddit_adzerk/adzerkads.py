@@ -14,6 +14,7 @@ from r2.controllers.reddit_base import (
 from r2.lib import promote
 from r2.lib.pages import Ads as BaseAds
 from r2.lib.wrapped import Templated
+from r2.models import Subreddit
 
 class Ads(BaseAds):
     def __init__(self):
@@ -29,6 +30,9 @@ class Ads(BaseAds):
             "keywords": list(keywords),
             "origin": c.request_origin,
         }
+
+        if isinstance(c.site, Subreddit) and not c.default_sr:
+            data["subreddit"] = c.site.name
 
         placements = request.GET.get("placements", None)
 

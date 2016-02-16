@@ -64,6 +64,7 @@
 
   ados.run.push(function() {
     ados.isAsync = true;
+    var placement = null;
 
     if (config.placements) {
       var placements = config.placements.split(',');
@@ -73,12 +74,14 @@
         var type = kvp[0];
         var creative = kvp[1];
 
-        ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type])
-          .setFlightCreativeId(creative);
+        placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
+        placement.setFlightCreativeId(creative);
+        placement.setProperties({ subreddit: config.subreddit });
       }
     } else {
       for (var type in PLACEMENT_TYPES) {
-        ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
+        placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
+        placement.setProperties({ subreddit: config.subreddit });
       }
     }
     
