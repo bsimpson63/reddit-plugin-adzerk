@@ -695,6 +695,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         "placements": placements,
         "keywords": keywords,
         "ip": request.ip,
+        "enableBotFiltering": True,
     }
 
     referrer = request.headers.get("referer", None)
