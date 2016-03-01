@@ -114,14 +114,25 @@ def date_from_adzerk(date_str):
 
 
 def render_link(link):
-    return json.dumps({
+    data = {
         "link": link._fullname,
         "title": "",
         "author": "",
         "target": "",
         "ecpm": "{{ad.ecpm}}",
         "priorityId": "{{ad.flight.priorityId}}",
-    })
+    }
+
+    if getattr(link, "moat_tracking", False):
+        data["moatQuery"] = (
+            "moatClientLevel1={{ad.flight.advertiserId}}"
+            "&moatClientLevel2={{ad.creative.id}}"
+            "&moatClientSlicer1={{site.id}}"
+            "&moatClientSlicer2={{properties.subreddit}}"
+            "&zMoatSZ={{ad.creative.width}}x{{ad.creative.height}}"
+        )
+
+    return json.dumps(data)
 
 
 def update_changed(adzerk_object, **d):
@@ -884,6 +895,7 @@ AdzerkResponse = namedtuple(
         'target',
         'ecpm',
         'priority',
+        'moat_query',
         'imp_pixel',
         'click_url',
         'upvote_pixel',
@@ -905,6 +917,10 @@ def adzerk_request(
 ):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
+    subreddit = None
+
+    if isinstance(c.site, Subreddit) and not c.default_sr:
+        subreddit = c.site.name
 
     for div in divs:
         placement = {
@@ -915,6 +931,12 @@ def adzerk_request(
           "eventIds": [EVENT_TYPE_UPVOTE, EVENT_TYPE_DOWNVOTE],
           "properties": properties,
         }
+
+        if subreddit is not None:
+            placement["properties"] = {
+                "subreddit": subreddit,
+            }
+
         placements.append(placement)
 
     keywords = [word.lower() for word in keywords]
@@ -1039,6 +1061,7 @@ def adzerk_request(
         priority = None
         priority_id = body.get('priorityId', None)
         ecpm = body.get('ecpm', None)
+        moat_query = body.get('moatQuery', None)
 
         if priority_id:
             priority = PRIORITIES_BY_ID.get(priority_id, "unknown (%s)" % priority_id)
@@ -1081,6 +1104,7 @@ def adzerk_request(
             target=target,
             ecpm=ecpm,
             priority=priority,
+            moat_query=moat_query,
             imp_pixel=imp_pixel,
             click_url=click_url,
             upvote_pixel=upvote_pixel,
@@ -1207,6 +1231,7 @@ class AdzerkApiController(api.ApiController):
             w.adserver_downvote_pixel = r.downvote_pixel
             w.adserver_click_url = r.click_url
             w.ecpm = r.ecpm
+            w.moat_query = r.moat_query
             w.num = ""
             return responsive(w.render(), space_compress=True)
         else:
