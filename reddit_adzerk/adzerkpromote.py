@@ -266,7 +266,7 @@ def update_advertiser(author):
     return az_advertiser
 
 
-def update_flight(link, campaign, az_campaign):
+def update_flight(link, campaign):
     """Add/update a reddit campaign as an Adzerk Flight"""
     if getattr(campaign, 'external_flight_id', None) is not None:
         az_flight = adzerk_api.Flight.get(campaign.external_flight_id)
@@ -304,7 +304,7 @@ def update_flight(link, campaign, az_campaign):
         'IsUnlimited': False,
         'IsFullSpeed': False,
         'Keywords': '\n'.join(list(keywords)),
-        'CampaignId': az_campaign.Id,
+        'CampaignId': link.external_campaign_id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
         'IsActive': (not promote.campaign_needs_approval(link, campaign) and
@@ -482,7 +482,7 @@ def update_flight(link, campaign, az_campaign):
     return az_flight
 
 
-def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
+def create_cfmap(link, campaign):
     """Create a CreativeFlightMap.
 
     Map the the reddit link (adzerk Creative) and reddit campaign (adzerk
@@ -495,12 +495,12 @@ def create_cfmap(link, campaign, az_campaign, az_creative, az_flight):
 
     d = {
         'SizeOverride': False,
-        'CampaignId': az_campaign.Id,
+        'CampaignId': link.external_campaign_id,
         'Percentage': 100,  # Each flight only has one creative (what about autobalanced)
         'DistributionType': 2, # 2: Percentage, 1: Auto-Balanced, 0: ???
         'Iframe': False,
-        'Creative': {'Id': az_creative.Id},
-        'FlightId': az_flight.Id,
+        'Creative': {'Id': link.external_creative_id},
+        'FlightId': campaign.external_flight_id,
         'Impressions': 100, # Percentage
         'IsDeleted': False,
         'IsActive': True,
@@ -540,22 +540,19 @@ def _update_adzerk(link, campaign):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
-        author = Account._byID(link.author_id, data=True)
-        az_advertiser = update_advertiser(author)
-        az_campaign = update_campaign(link, az_advertiser)
-        az_creative = update_creative(link, az_advertiser)
 
-        if campaign:
-            az_flight = update_flight(link, campaign, az_campaign)
+        if campaign is None:
+            author = Account._byID(link.author_id, data=True)
+            az_advertiser = update_advertiser(author)
+            az_campaign = update_campaign(link, az_advertiser)
+            az_creative = update_creative(link, az_advertiser)
+        else:
+            az_flight = update_flight(link, campaign)
             if getattr(campaign, 'external_cfmap_id', None) is not None:
                 az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
                                 campaign.external_cfmap_id)
             else:
-                az_cfmap = create_cfmap(link, campaign, az_campaign,
-                                        az_creative, az_flight)
-            PromotionLog.add(link, 'updated %s' % az_flight)
-        else:
-            PromotionLog.add(link, 'updated %s' % az_campaign)
+                az_cfmap = create_cfmap(link, campaign)
 
 
 def deactivate_overdelivered(link, campaign):
@@ -573,8 +570,7 @@ def _deactivate_overdelivered(link, campaign):
         msg = '%s deactivating adzerk flight for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
 
-        az_campaign = update_campaign(link)
-        az_flight = update_flight(link, campaign, az_campaign)
+        az_flight = update_flight(link, campaign)
         PromotionLog.add(link, 'deactivated %s' % az_flight)
 
 
