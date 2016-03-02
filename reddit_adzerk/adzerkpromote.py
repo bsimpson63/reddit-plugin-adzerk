@@ -541,12 +541,15 @@ def _update_adzerk(link, campaign):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
 
-        if campaign is None:
+        existing_promo = hasattr(link, "external_campaign_id")
+
+        if not existing_promo or campaign is None:
             author = Account._byID(link.author_id, data=True)
             az_advertiser = update_advertiser(author)
             az_campaign = update_campaign(link, az_advertiser)
             az_creative = update_creative(link, az_advertiser)
-        else:
+
+        if campaign:
             az_flight = update_flight(link, campaign)
             if getattr(campaign, 'external_cfmap_id', None) is not None:
                 az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
