@@ -506,7 +506,7 @@ def create_cfmap(link, campaign):
         'IsActive': True,
     }
 
-    az_cfmap = adzerk_api.CreativeFlightMap.create(az_flight.Id, **d)
+    az_cfmap = adzerk_api.CreativeFlightMap.create(campaign.external_flight_id, **d)
     campaign.external_cfmap_id = az_cfmap.Id
     campaign._commit()
 
