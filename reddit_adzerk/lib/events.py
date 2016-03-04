@@ -99,6 +99,7 @@ class AdEventQueue(EventQueue):
             campaign_id=None,
             subreddit=None,
             priority=None,
+            ecpm=None,
             request=None,
             context=None,
         ):
@@ -112,6 +113,7 @@ class AdEventQueue(EventQueue):
         link_id: The id of the promoted link.
         subreddit: The Subreddit of the ad was  displayed on.
         priority: The priority name of the ad.
+        ecpm: The effective cpm of the ad.
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
@@ -130,6 +132,7 @@ class AdEventQueue(EventQueue):
         event.add("link_id", link_id)
         event.add("campaign_id", campaign_id)
         event.add("priority", priority)
+        event.add("ecpm", ecpm)
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)

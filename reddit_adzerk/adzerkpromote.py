@@ -117,6 +117,7 @@ def render_link(link):
         "title": "",
         "author": "",
         "target": "",
+        "ecpm": "{{ad.ecpm}}",
         "priorityId": "{{ad.flight.priorityId}}",
     })
 
@@ -848,6 +849,7 @@ AdzerkResponse = namedtuple(
         'link',
         'campaign',
         'target',
+        'ecpm',
         'priority',
         'imp_pixel',
         'click_url',
@@ -997,6 +999,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         target = body['target']
         priority = None
         priority_id = body.get('priorityId', None)
+        ecpm = body.get('ecpm', None)
 
         if priority_id:
             priority = PRIORITIES_BY_ID.get(priority_id, "unknown (%s)" % priority_id)
@@ -1011,6 +1014,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             link_id=link_fullname,
             campaign_id=campaign_fullname,
             priority=priority,
+            ecpm=ecpm,
             request=request,
             context=c,
         )
@@ -1036,6 +1040,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             link=link_fullname,
             campaign=campaign_fullname,
             target=target,
+            ecpm=ecpm,
             priority=priority,
             imp_pixel=imp_pixel,
             click_url=click_url,
@@ -1122,6 +1127,7 @@ class AdzerkApiController(api.ApiController):
             w.adserver_upvote_pixel = r.upvote_pixel
             w.adserver_downvote_pixel = r.downvote_pixel
             w.adserver_click_url = r.click_url
+            w.ecpm = r.ecpm
             w.num = ""
             return responsive(w.render(), space_compress=True)
         else:
