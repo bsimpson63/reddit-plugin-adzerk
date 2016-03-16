@@ -65,6 +65,9 @@ def demangle_frontpage_name(keyword):
 
 
 def queue_report(start, end, groups=None, parameters=None):
+    if not groups:
+        groups = []
+
     data = {
         "StartDate": start.strftime("%m/%d/%Y"),
         "EndDate": end.strftime("%m/%d/%Y"),
