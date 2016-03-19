@@ -89,6 +89,7 @@ GOAL_TYPE_BY_COST_BASIS = {
 }
 
 FREQUENCY_CAP_DURATION_HOURS = 24
+PRIORITIES_BY_ID = {v:k for k, v in g.az_selfserve_priorities.iteritems()}
 
 def sanitize_text(text):
     return _force_utf8(text).translate(None, DELCHARS)
@@ -112,10 +113,11 @@ def date_from_adzerk(date_str):
 
 def render_link(link):
     return json.dumps({
-        'link': link._fullname,
-        'title': '',
-        'author': '',
-        'target': '',
+        "link": link._fullname,
+        "title": "",
+        "author": "",
+        "target": "",
+        "priorityId": "{{ad.flight.priorityId}}",
     })
 
 
@@ -846,6 +848,7 @@ AdzerkResponse = namedtuple(
         'link',
         'campaign',
         'target',
+        'priority',
         'imp_pixel',
         'click_url',
         'upvote_pixel',
@@ -992,6 +995,11 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         body = json.loads(contents['body'])
         link_fullname = body['link']
         target = body['target']
+        priority = None
+        priority_id = body.get('priorityId', None)
+
+        if priority_id:
+            priority = PRIORITIES_BY_ID.get(priority_id, "unknown (%s)" % priority_id)
 
         g.ad_events.ad_response(
             keywords=keywords,
@@ -1002,6 +1010,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             subreddit=c.site,
             link_id=link_fullname,
             campaign_id=campaign_fullname,
+            priority=priority,
             request=request,
             context=c,
         )
@@ -1027,6 +1036,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             link=link_fullname,
             campaign=campaign_fullname,
             target=target,
+            priority=priority,
             imp_pixel=imp_pixel,
             click_url=click_url,
             upvote_pixel=upvote_pixel,

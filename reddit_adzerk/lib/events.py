@@ -98,6 +98,7 @@ class AdEventQueue(EventQueue):
             link_id=None,
             campaign_id=None,
             subreddit=None,
+            priority=None,
             request=None,
             context=None,
         ):
@@ -110,6 +111,7 @@ class AdEventQueue(EventQueue):
         ad_id: Unique id of the ad response.
         link_id: The id of the promoted link.
         subreddit: The Subreddit of the ad was  displayed on.
+        priority: The priority name of the ad.
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
@@ -127,6 +129,7 @@ class AdEventQueue(EventQueue):
         event.add("ad_id", ad_id)
         event.add("link_id", link_id)
         event.add("campaign_id", campaign_id)
+        event.add("priority", priority)
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)
