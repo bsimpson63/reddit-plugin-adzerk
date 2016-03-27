@@ -5,7 +5,14 @@ import sys
 from pylons import app_globals as g
 
 
-class AdzerkError(Exception): pass
+class AdzerkError(Exception):
+    def __init__(self, status_code, response_body):
+        message = "(%s) %s" % (status_code, response_body)
+        super(AdzerkError, self).__init__(message)
+        self.status_code = status_code
+        self.response_body = response_body
+
+
 class NotFound(AdzerkError): pass
 
 
@@ -17,12 +24,11 @@ def handle_response(response):
             # A TypeError can be raised if the encoding is incorrect
             text = ""
 
-        raise AdzerkError(
-            'response %s: %s' % (response.status_code, text))
+        raise AdzerkError(response.status_code, text)
     try:
         return json.loads(response.text)
     except ValueError:
-        raise AdzerkError('bad response')
+        raise AdzerkError(response.status_code, response.text)
 
 
 class Stub(object):

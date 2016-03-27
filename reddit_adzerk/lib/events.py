@@ -23,6 +23,25 @@ class AdEvent(Event):
         return data
 
 
+class AdzerkAPIEvent(Event):
+    def add_target_fields(self, thing):
+        self.add("target_fullname", thing._fullname)
+        self.add("target_type", thing.__class__.__name__)
+        self.add("is_deleted", thing._deleted)
+
+    def add_caller_fields(self, user):
+        if user:
+            self.add("caller_user_id", user._id)
+            self.add("caller_user_name", user.name)
+        else:
+            self.add("is_automated", True)
+
+    def add_error_fields(self, error):
+        if error:
+            self.add("error_status_code", error.status_code)
+            self.add("error_body", error.response_body)
+
+
 class AdEventQueue(EventQueue):
     @squelch_exceptions
     @sampled("events_collector_ad_serving_sample_rate")
@@ -111,5 +130,43 @@ class AdEventQueue(EventQueue):
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def adzerk_api_request(
+            self,
+            request_type,
+            thing,
+            request_body,
+            triggered_by=None,
+            additional_data=None,
+            request_error=None,
+        ):
+        """
+        Create an `adzerk_api_events` event for event-collector.
+
+        request_type: The type of request being made
+        thing: The `Thing` which the request data is derived from
+        request_body: The JSON payload to be sent to adzerk
+        triggered_by: The user who triggered the API call
+        additional_data: A dict of any additional meta data that may be
+            relevant to the request
+        request_error: An `adzerk_api.AdzerkError` if the request fails
+
+        """
+        event = AdzerkAPIEvent(
+            topic='adzerk_api_events',
+            event_type='ss.%s_request' % request_type,
+        )
+
+        event.add_target_fields(thing)
+        event.add_caller_fields(triggered_by)
+        event.add_error_fields(request_error)
+        event.add("request_body", request_body)
+
+        if additional_data:
+            for key, value in additional_data.iteritems():
+                event.add(key, value)
 
         self.save_event(event)

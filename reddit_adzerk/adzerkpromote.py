@@ -142,7 +142,7 @@ def make_change_strings(changed):
     return map(change_to_str, changed)
 
 
-def update_campaign(link, az_advertiser=None):
+def update_campaign(link, az_advertiser=None, triggered_by=None):
     """Add/update a reddit link as an Adzerk Campaign"""
     if getattr(link, 'external_campaign_id', None) is not None:
         az_campaign = adzerk_api.Campaign.get(link.external_campaign_id)
@@ -160,8 +160,24 @@ def update_campaign(link, az_advertiser=None):
     if az_advertiser:
         d["AdvertiserId"] = az_advertiser.Id
 
+    request_error = None
+
     if az_campaign:
-        changed = update_changed(az_campaign, **d)
+        try:
+            changed = update_changed(az_campaign, **d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="update_campaign",
+                thing=link,
+                request_body=d,
+                triggered_by=triggered_by,
+                request_error=request_error,
+            )
+            if request_error:
+                raise request_error
+
         change_strs = make_change_strings(changed)
         if change_strs:
             log_text = 'updated %s: ' % az_campaign + ', '.join(change_strs)
@@ -173,7 +189,22 @@ def update_campaign(link, az_advertiser=None):
             'Flights': [],
             'StartDate': date_to_adzerk(datetime.datetime.now(g.tz)),
         })
-        az_campaign = adzerk_api.Campaign.create(**d)
+
+        try:
+            az_campaign = adzerk_api.Campaign.create(**d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="create_campaign",
+                thing=link,
+                request_body=d,
+                triggered_by=triggered_by,
+                request_error=request_error,
+            )
+            if request_error:
+                raise request_error
+
         link.external_campaign_id = az_campaign.Id
         link._commit()
         log_text = 'created %s' % az_campaign
@@ -185,7 +216,7 @@ def update_campaign(link, az_advertiser=None):
     return az_campaign
 
 
-def update_creative(link, az_advertiser):
+def update_creative(link, az_advertiser, triggered_by=None):
     """Add/update a reddit link as an Adzerk Creative"""
     if getattr(link, 'external_creative_id', None) is not None:
         az_creative = adzerk_api.Creative.get(link.external_creative_id)
@@ -218,8 +249,25 @@ def update_creative(link, az_advertiser):
         'IsNoTrack': DNT_compliant,
     }
 
+    request_error = None
+
     if az_creative:
-        changed = update_changed(az_creative, **d)
+        try:
+            changed = update_changed(az_creative, **d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="update_creative",
+                thing=link,
+                request_body=d,
+                triggered_by=triggered_by,
+                request_error=request_error,
+            )
+
+            if request_error:
+                raise request_error
+
         change_strs = make_change_strings(changed)
         if change_strs:
             log_text = 'updated %s: ' % az_creative + ', '.join(change_strs)
@@ -230,10 +278,22 @@ def update_creative(link, az_advertiser):
             'AdvertiserId': az_advertiser.Id,
             'Title': title,
         })
+
         try:
             az_creative = adzerk_api.Creative.create(**d)
-        except:
-            raise ValueError(d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="create_creative",
+                thing=link,
+                request_body=d,
+                triggered_by=triggered_by,
+                request_error=request_error,
+            )
+
+            if request_error:
+                raise request_error
 
         link.external_creative_id = az_creative.Id
         link._commit()
@@ -246,7 +306,7 @@ def update_creative(link, az_advertiser):
     return az_creative
 
 
-def update_advertiser(author):
+def update_advertiser(author, triggered_by=None):
     if getattr(author, 'external_advertiser_id', None) is not None:
         az_advertiser = adzerk_api.Advertiser.get(author.external_advertiser_id)
     else:
@@ -255,18 +315,37 @@ def update_advertiser(author):
     if az_advertiser:
         return az_advertiser
 
-    az_advertiser = adzerk_api.Advertiser.create(**{
+    d = {
         "Title": author.name,
         "IsActive": True,
         "IsDeleted": False,
-    })
+    }
+
+    request_error = None
+    try:
+        az_advertiser = adzerk_api.Advertiser.create(**d)
+    except adzerk_api.AdzerkError as e:
+        request_error = e
+    finally:
+        g.ad_events.adzerk_api_request(
+            request_type="create_advertiser",
+            thing=author,
+            request_body=d,
+            triggered_by=triggered_by,
+            request_error=request_error,
+        )
+
+        # re-raise after sending event to requeue item.
+        if request_error:
+            raise request_error
+
     author.external_advertiser_id = az_advertiser.Id
     author._commit()
 
     return az_advertiser
 
 
-def update_flight(link, campaign):
+def update_flight(link, campaign, triggered_by=None):
     """Add/update a reddit campaign as an Adzerk Flight"""
     if getattr(campaign, 'external_flight_id', None) is not None:
         az_flight = adzerk_api.Flight.get(campaign.external_flight_id)
@@ -297,6 +376,10 @@ def update_flight(link, campaign):
     elif targets_frontpage:
         keywords.add("s.frontpage")
 
+    campaign_needs_approval = campaign.needs_approval
+    campaign_is_paused = campaign.paused
+    campaign_needs_payment = not promote.charged_or_not_needed(campaign)
+
     d = {
         'StartDate': date_to_adzerk(delayed_start),
         'EndDate': date_to_adzerk(campaign.end_date),
@@ -307,9 +390,9 @@ def update_flight(link, campaign):
         'CampaignId': link.external_campaign_id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
-        'IsActive': (not campaign.needs_approval and
-                     not campaign.paused and
-                     promote.charged_or_not_needed(campaign) and
+        'IsActive': (not campaign_needs_approval and
+                     not campaign_is_paused and
+                     not campaign_needs_payment and
                      not (campaign._deleted or campaign_overdelivered)),
     }
 
@@ -468,8 +551,33 @@ def update_flight(link, campaign):
             'GeoTargeting': [],
         })
 
+    request_error = None
+    additional_data = dict(
+        requires_approval=campaign_needs_approval,
+        requires_payment=campaign_needs_payment,
+        is_overdelivered=campaign_overdelivered,
+        is_paused=campaign_is_paused,
+    )
+
     if az_flight:
-        changed = update_changed(az_flight, **d)
+        try:
+            changed = update_changed(az_flight, **d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="update_flight",
+                thing=campaign,
+                request_body=d,
+                triggered_by=triggered_by,
+                additional_data=additional_data,
+                request_error=request_error,
+            )
+
+            # re-raise after sending event to requeue item.
+            if request_error:
+                raise request_error
+
         change_strs = make_change_strings(changed)
 
         if campaign_overdelivered:
@@ -483,7 +591,25 @@ def update_flight(link, campaign):
             log_text = None
     else:
         d.update({'Name': campaign._fullname})
-        az_flight = adzerk_api.Flight.create(**d)
+
+        try:
+            az_flight = adzerk_api.Flight.create(**d)
+        except adzerk_api.AdzerkError as e:
+            request_error = e
+        finally:
+            g.ad_events.adzerk_api_request(
+                request_type="create_flight",
+                thing=campaign,
+                request_body=d,
+                triggered_by=triggered_by,
+                additional_data=additional_data,
+                request_error=request_error,
+            )
+
+            # re-raise after sending event to requeue item.
+            if request_error:
+                raise request_error
+
         campaign.external_flight_id = az_flight.Id
         campaign._commit()
 
@@ -501,7 +627,7 @@ def update_flight(link, campaign):
     return az_flight
 
 
-def create_cfmap(link, campaign):
+def update_cfmap(link, campaign, triggered_by):
     """Create a CreativeFlightMap.
 
     Map the the reddit link (adzerk Creative) and reddit campaign (adzerk
@@ -510,7 +636,7 @@ def create_cfmap(link, campaign):
     """
 
     if getattr(campaign, 'external_cfmap_id', None) is not None:
-        raise AttributeError('%s has existing external_cfmap_id' % campaign)
+        return
 
     d = {
         'SizeOverride': False,
@@ -525,7 +651,28 @@ def create_cfmap(link, campaign):
         'IsActive': True,
     }
 
-    az_cfmap = adzerk_api.CreativeFlightMap.create(campaign.external_flight_id, **d)
+    request_error = None
+    try:
+        az_cfmap = adzerk_api.CreativeFlightMap.create(campaign.external_flight_id, **d)
+    except adzerk_api.AdzerkError as e:
+        request_error = e
+    finally:
+        g.ad_events.adzerk_api_request(
+            request_type="create_cfmap",
+            thing=campaign,
+            request_body=d,
+            triggered_by=triggered_by,
+            request_error=request_error,
+            additional_data=dict(
+                link_fullname=link._fullname,
+                link_id=link._id,
+            )
+        )
+
+        if request_error:
+            raise request_error
+
+
     campaign.external_cfmap_id = az_cfmap.Id
     campaign._commit()
 
@@ -542,6 +689,7 @@ def update_adzerk(link, campaign=None):
         'action': 'update_adzerk',
         'link': link._fullname,
         'campaign': campaign._fullname if campaign else None,
+        'triggered_by': c.user._fullname if c.user else None,
     })
     amqp.add_item('adzerk_q', msg)
 
@@ -555,7 +703,7 @@ def deactivate_orphaned_flight(az_flight_id):
     }))
 
 
-def _update_adzerk(link, campaign):
+def _update_adzerk(link, campaign, triggered_by):
     with g.make_lock('adzerk_update', 'adzerk-' + link._fullname):
         msg = '%s updating/creating adzerk objects for %s - %s'
         g.log.info(msg % (datetime.datetime.now(g.tz), link, campaign))
@@ -564,17 +712,13 @@ def _update_adzerk(link, campaign):
 
         if not existing_promo or campaign is None:
             author = Account._byID(link.author_id, data=True)
-            az_advertiser = update_advertiser(author)
-            az_campaign = update_campaign(link, az_advertiser)
-            az_creative = update_creative(link, az_advertiser)
+            az_advertiser = update_advertiser(author, triggered_by)
+            update_campaign(link, az_advertiser, triggered_by)
+            update_creative(link, az_advertiser, triggered_by)
 
         if campaign:
-            az_flight = update_flight(link, campaign)
-            if getattr(campaign, 'external_cfmap_id', None) is not None:
-                az_cfmap = adzerk_api.CreativeFlightMap.get(az_flight.Id,
-                                campaign.external_cfmap_id)
-            else:
-                az_cfmap = create_cfmap(link, campaign)
+            update_flight(link, campaign, triggered_by)
+            update_cfmap(link, campaign, triggered_by)
 
 
 def deactivate_overdelivered(link, campaign):
@@ -679,7 +823,13 @@ def process_adzerk():
             campaign = None
 
         if action == 'update_adzerk':
-            _update_adzerk(link, campaign)
+            if data['triggered_by']:
+                triggered_by = Account._by_fullname(data['triggered_by'], data=True)
+            else:
+                triggered_by = None
+
+            _update_adzerk(link, campaign, triggered_by)
+
         elif action == 'deactivate_overdelivered':
             _deactivate_overdelivered(link, campaign)
 
