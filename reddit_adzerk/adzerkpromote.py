@@ -608,6 +608,15 @@ def edit_promotion(link):
     update_adzerk(link)
 
 
+@hooks.on('thing.edit_over_18')
+def edit_over_18(thing):
+    if not isinstance(thing, Link):
+        return
+
+    for campaign in PromoCampaign._by_link(thing._id):
+        update_adzerk(thing, campaign)
+
+
 @hooks.on('promote.new_campaign')
 def new_campaign(link, campaign):
     update_adzerk(link, campaign)
