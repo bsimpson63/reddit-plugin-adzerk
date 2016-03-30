@@ -307,7 +307,7 @@ def update_flight(link, campaign):
         'CampaignId': link.external_campaign_id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
-        'IsActive': (not promote.campaign_needs_approval(link, campaign) and
+        'IsActive': (not campaign.needs_approval and
                      not campaign.paused and
                      promote.charged_or_not_needed(campaign) and
                      not (campaign._deleted or campaign_overdelivered)),
