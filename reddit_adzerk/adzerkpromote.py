@@ -388,7 +388,7 @@ def update_flight(link, campaign):
         }]
 
         if az_flight:
-            site_targeting['FlightId'] = az_flight.Id
+            site_targeting[0]['FlightId'] = az_flight.Id
 
         # Check equality more specifically to reduce spam in the PromotionLog.
         update_site_targeting = True
