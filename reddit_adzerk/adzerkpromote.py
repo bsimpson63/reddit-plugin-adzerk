@@ -381,12 +381,31 @@ def update_flight(link, campaign):
         })
 
     if campaign.platform != 'all':
-        d.update({
-            'SiteZoneTargeting': [{
-                'SiteId': g.az_selfserve_site_ids[campaign.platform],
-                'IsExclude': False,
-            }],
-        })
+        site_targeting = [{
+            'SiteId': g.az_selfserve_site_ids[campaign.platform],
+            'IsExclude': False,
+            'ZoneId': None,
+        }]
+
+        if az_flight:
+            site_targeting['FlightId'] = az_flight.Id
+
+        # Check equality more specifically to reduce spam in the PromotionLog.
+        update_site_targeting = True
+        if az_flight and az_flight.SiteZoneTargeting:
+            # Loop through the existing site targeting and remove the `Id` param.
+            old_site_targeting = map(
+                lambda (index, value): {
+                    key: value[key]
+                    for key in value.keys() if key != "Id"},
+                enumerate(az_flight.SiteZoneTargeting),
+            )
+            update_site_targeting = old_site_targeting != site_targeting
+
+        if update_site_targeting:
+            d.update({
+                'SiteZoneTargeting': site_targeting,
+            })
 
     # special handling for location conversions between reddit and adzerk
     if campaign.location:
