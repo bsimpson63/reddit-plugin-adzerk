@@ -107,9 +107,9 @@ class Base(object):
         return {self._name: json.dumps(self._to_item())}
 
     @classmethod
-    def list(cls):
+    def list(cls, params=None):
         url = '/'.join([cls._base_url, cls._name])
-        response = requests.get(url, headers=cls._headers())
+        response = requests.get(url, headers=cls._headers(), params=params)
         content = handle_response(response)
         items = content.get('items')
         if items:
@@ -280,6 +280,10 @@ class Flight(Base):
             thing.CreativeMaps = [CreativeFlightMap._from_item(item)
                              for item in thing.CreativeMaps]
         return thing
+
+    @classmethod
+    def list(cls, is_active=False):
+        return super(Flight, cls).list({"isActive" : is_active})
 
     def _to_item(self):
         item = Base._to_item(self)
