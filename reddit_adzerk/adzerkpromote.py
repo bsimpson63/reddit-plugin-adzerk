@@ -713,8 +713,10 @@ def _update_adzerk(link, campaign, triggered_by):
         if not existing_promo or campaign is None:
             author = Account._byID(link.author_id, data=True)
             az_advertiser = update_advertiser(author, triggered_by)
-            update_campaign(link, az_advertiser, triggered_by)
             update_creative(link, az_advertiser, triggered_by)
+
+            if not link.promoted_externally:
+                update_campaign(link, az_advertiser, triggered_by)
 
         if campaign:
             update_flight(link, campaign, triggered_by)
@@ -764,7 +766,8 @@ def deactivate_overdelivered_campaigns(offset=0):
 
 @hooks.on('promote.edit_promotion')
 def edit_promotion(link):
-    if not list(PromoCampaign._by_link(link._id)):
+    if (not link.promoted_externally or
+        list(PromoCampaign._by_link(link._id))):
         g.log.debug("no campaigns for link, skipping %s" % link._id)
         return
 
@@ -968,10 +971,10 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         upvote_pixel = events_by_id[EVENT_TYPE_UPVOTE]
         downvote_pixel = events_by_id[EVENT_TYPE_DOWNVOTE]
 
-        campaign = PromoCampaignByFlightIdCache.get(adzerk_flight_id)
+        campaign_fullname = PromoCampaignByFlightIdCache.get(adzerk_flight_id)
         contents = decision['contents'][0]
         body = json.loads(contents['body'])
-        link = body['link']
+        link_fullname = body['link']
         target = body['target']
 
         g.ad_events.ad_response(
@@ -981,27 +984,32 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
             placement_types=placement["adTypes"],
             ad_id=ad_id,
             subreddit=c.site,
-            link_id=link,
-            campaign_id=campaign,
+            link_id=link_fullname,
+            campaign_id=campaign_fullname,
             request=request,
             context=c,
         )
 
-        if not campaign:
-            adzerk_campaign_id = decision['campaignId']
+        if not campaign_fullname:
+            link = Link._by_fullname(link_fullname, data=True, stale=True)
 
-            g.stats.simple_event('adzerk.request.orphaned_flight')
-            g.log.error('adzerk_request: couldn\'t find campaign for flight (az campaign: %s, flight: %s)',
-                adzerk_campaign_id, adzerk_flight_id)
+            if link.promoted_externally:
+                campaign_fullname = promote.EXTERNAL_CAMPAIGN
+            else:
+                adzerk_campaign_id = decision['campaignId']
 
-            # deactivate the flight, it will be reactivated if a
-            # valid campaign actually exists
-            deactivate_orphaned_flight(adzerk_flight_id)
-            continue
+                g.stats.simple_event('adzerk.request.orphaned_flight')
+                g.log.error('adzerk_request: couldn\'t find campaign for flight (az campaign: %s, flight: %s)',
+                    adzerk_campaign_id, adzerk_flight_id)
+
+                # deactivate the flight, it will be reactivated if a
+                # valid campaign actually exists
+                deactivate_orphaned_flight(adzerk_flight_id)
+                continue
 
         res.append(AdzerkResponse(
-            link=link,
-            campaign=campaign,
+            link=link_fullname,
+            campaign=campaign_fullname,
             target=target,
             imp_pixel=imp_pixel,
             click_url=click_url,
