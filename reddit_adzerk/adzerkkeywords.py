@@ -4,6 +4,8 @@
 import adzerk_api
 import json
 from pylons import app_globals as g
+
+KEYWORD_NODE = "/keyword-targets"
     
 def update_global_keywords():
     active_flights = adzerk_api.Flight.list(is_active=True)
@@ -20,4 +22,5 @@ def update_global_keywords():
 
     # Store results in zookeeper
     if g.zookeeper:
-        g.zookeeper.set("/keyword-targets", json.dumps(list(keyword_target)))
+        g.zookeeper.ensure_path(KEYWORD_NODE)
+        g.zookeeper.set(KEYWORD_NODE, json.dumps(list(keyword_target)))
