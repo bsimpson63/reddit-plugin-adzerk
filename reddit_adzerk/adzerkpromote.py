@@ -1026,16 +1026,20 @@ class AdzerkApiController(api.ApiController):
         ], default=None),
         loid=nop('loid', None),
         is_refresh=VBoolean("is_refresh", default=False),
+        displayed_things=VPrintable("dt", max_length=200),
     )
-    def POST_request_promo(self, site, srnames, is_mobile_web, platform, loid, is_refresh):
+    def POST_request_promo(self, site, srnames, is_mobile_web, platform, loid, is_refresh, displayed_things):
         self.OPTIONS_request_promo()
 
         if (errors.INVALID_SITE_PATH, "site") in c.errors:
             return abort(reddit_http_error(400, errors.INVALID_SITE_PATH))
 
+        displayed_list = displayed_things.split(',') if displayed_things else []
         if site:
             keywords = promote.keywords_from_context(
-                c.user, site,
+                c.user,
+                site,
+                displayed_things=displayed_list,
             )
         elif srnames:
             keywords = srnames.split('+')
@@ -1096,4 +1100,3 @@ class AdzerkApiController(api.ApiController):
             return loid
         else:
             return None
-
