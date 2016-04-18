@@ -766,7 +766,7 @@ def deactivate_overdelivered_campaigns(offset=0):
 
 @hooks.on('promote.edit_promotion')
 def edit_promotion(link):
-    if (not link.promoted_externally or
+    if (not link.promoted_externally and
             not list(PromoCampaign._by_link(link._id))):
         g.log.debug("no campaigns for link, skipping %s" % link._id)
         return
