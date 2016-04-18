@@ -50,6 +50,7 @@ class Adzerk(Plugin):
 
         ConfigValue.float: [
             'events_collector_ad_serving_sample_rate',
+            'adx_passback_id',
         ],
 
     }
@@ -76,6 +77,7 @@ class Adzerk(Plugin):
         mc('/api/request_promo/', controller='adzerkapi', action='request_promo')
         mc('/ads/display/300x250/', controller='adserving', action='ad_300_250')
         mc('/ads/display/300x250-companion/', controller='adserving', action='ad_300_250_companion')
+        mc('/ads/adx-passback', controller='adx', action='passback')
 
     def declare_queues(self, queues):
         from r2.config.queues import MessageQueue
@@ -98,4 +100,5 @@ class Adzerk(Plugin):
         from adzerkpromote import AdzerkApiController
         from adzerkpromote import hooks as adzerkpromote_hooks
         from adzerkads import AdServingController
+        from adzerkads import AdXController
         adzerkpromote_hooks.register_all()

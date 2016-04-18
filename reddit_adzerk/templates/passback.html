@@ -1,0 +1,14 @@
+<%! from r2.lib.filters import scriptsafe_dumps %>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>passback</title>
+</head>
+<body>
+  <script>
+    window.top.postMessage({flightId: ${scriptsafe_dumps(thing.passback_id)}}, '*');
+  </script>
+</body>
+</html>

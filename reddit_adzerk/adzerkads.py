@@ -55,6 +55,10 @@ class Ad300x250Companion(BaseAdFrame):
     pass
 
 
+class Passback(Templated):
+    pass
+
+
 @add_controller
 class AdServingController(MinimalController):
     def pre(self):
@@ -75,4 +79,10 @@ class AdServingController(MinimalController):
 
     def GET_ad_300_250_companion(self):
         return Ad300x250Companion().render()
+
+@add_controller
+class AdXController(MinimalController):
+
+    def GET_passback(self):
+        return Passback(passback_id=g.live_config["adx_passback_id"]).render()
 
