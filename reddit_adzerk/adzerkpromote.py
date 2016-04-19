@@ -153,7 +153,9 @@ def update_campaign(link, az_advertiser=None, triggered_by=None):
         'SalespersonId': g.az_selfserve_salesperson_id,
         'IsDeleted': False, # deleting an adzerk object will make it
                             # unretrievable, so just set it inactive
-        'IsActive': promote.is_accepted(link) and not link._deleted,
+        'IsActive': ((promote.is_accepted(link) or
+                     promote.is_external(link)) and
+                     not link._deleted),
         'Price': 0,
     }
 
@@ -715,7 +717,7 @@ def _update_adzerk(link, campaign, triggered_by):
             az_advertiser = update_advertiser(author, triggered_by)
             update_creative(link, az_advertiser, triggered_by)
 
-            if not link.promoted_externally:
+            if not promote.is_external(link):
                 update_campaign(link, az_advertiser, triggered_by)
 
         if campaign:
@@ -766,7 +768,7 @@ def deactivate_overdelivered_campaigns(offset=0):
 
 @hooks.on('promote.edit_promotion')
 def edit_promotion(link):
-    if (not link.promoted_externally and
+    if (not promote.is_external(link) and
             not list(PromoCampaign._by_link(link._id))):
         g.log.debug("no campaigns for link, skipping %s" % link._id)
         return
@@ -993,7 +995,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         if not campaign_fullname:
             link = Link._by_fullname(link_fullname, data=True, stale=True)
 
-            if link.promoted_externally:
+            if promote.is_external(link):
                 campaign_fullname = promote.EXTERNAL_CAMPAIGN
             else:
                 adzerk_campaign_id = decision['campaignId']
