@@ -50,6 +50,9 @@ class Adzerk(Plugin):
 
         ConfigValue.float: [
             'events_collector_ad_serving_sample_rate',
+        ],
+
+        ConfigValue.int: [
             'adx_passback_id',
         ],
 
