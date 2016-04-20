@@ -23,7 +23,6 @@ class Ads(BaseAds):
         keywords = promote.keywords_from_context(
             c.user, c.site,
             include_subscriptions=False,
-            live_promos_only=False,
         )
 
         data = {
