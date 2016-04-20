@@ -828,7 +828,7 @@ def process_adzerk():
             campaign = None
 
         if action == 'update_adzerk':
-            if 'triggered_by' in data:
+            if 'triggered_by' in data and data['triggered_by'] is not None:
                 triggered_by = Account._by_fullname(data['triggered_by'], data=True)
             else:
                 triggered_by = None
