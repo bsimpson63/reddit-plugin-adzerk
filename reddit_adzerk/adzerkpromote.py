@@ -4,6 +4,7 @@ import json
 import math
 import re
 import string
+import uuid
 from urllib import quote
 
 import adzerk_api
@@ -902,8 +903,11 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
     timer = g.stats.get_timer("providers.adzerk")
     timer.start()
 
+    request_id = str(uuid.uuid4())
+
     for placement in placements:
         g.ad_events.ad_request(
+            request_id=request_id,
             keywords=keywords,
             platform=platform,
             placement_name=placement["divName"],
@@ -954,6 +958,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         # adserver ads are not reddit links, we return the body
         if decision['campaignId'] in g.adserver_campaign_ids:
             g.ad_events.ad_response(
+                request_id=request_id,
                 keywords=keywords,
                 platform=platform,
                 placement_name=div,
@@ -980,6 +985,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         target = body['target']
 
         g.ad_events.ad_response(
+            request_id=request_id,
             keywords=keywords,
             platform=platform,
             placement_name=div,
