@@ -940,8 +940,8 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
         # Temporarily log request data and response body,
         # sample at 1%
         if random.random() < g.live_config.get('ad_log_sample_rate', 0):
-            g.log.info("ad_request: %s, ad_response: [%s] %s",
-                json.dumps(data), r.status_code, r.text)
+            g.log.info("ad_request [DNT=%s]: %s, ad_response: [%s] %s",
+                do_not_track, json.dumps(data), r.status_code, r.text)
 
         if errored:
             return None
