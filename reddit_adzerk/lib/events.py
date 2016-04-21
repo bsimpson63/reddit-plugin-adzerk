@@ -47,7 +47,6 @@ class AdEventQueue(EventQueue):
     @sampled("events_collector_ad_serving_sample_rate")
     def ad_request(
             self,
-            request_id,
             keywords,
             platform,
             placement_name,
@@ -59,7 +58,6 @@ class AdEventQueue(EventQueue):
         ):
         """Create an `ad_request` for event-collector.
 
-        request_id: UUIDv4 to match the request/response pairs on.
         keywords: Array of keywords used to select the ad.
         platform: The platform the ad was requested for.
         placement_name: The identifier of the placement.
@@ -77,7 +75,6 @@ class AdEventQueue(EventQueue):
             context=context,
         )
 
-        event.add("request_id", request_id)
         event.add("keywords", keywords)
         event.add("platform", platform)
         event.add("placement_name", placement_name)
@@ -93,7 +90,6 @@ class AdEventQueue(EventQueue):
     @sampled("events_collector_ad_serving_sample_rate")
     def ad_response(
             self,
-            request_id,
             keywords,
             platform,
             placement_name,
@@ -107,7 +103,6 @@ class AdEventQueue(EventQueue):
         ):
         """Create an `ad_response` for event-collector.
 
-        request_id: UUIDv4 to match the request/response pairs on.
         keywords: Array of keywords used to select the ad.
         platform: The platform the ad was requested for.
         placement_name: The identifier of the placement.
@@ -125,7 +120,6 @@ class AdEventQueue(EventQueue):
             context=context,
         )
 
-        event.add("request_id", request_id)
         event.add("keywords", keywords)
         event.add("platform", platform)
         event.add("placement_name", placement_name)
