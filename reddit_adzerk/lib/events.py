@@ -95,8 +95,8 @@ class AdEventQueue(EventQueue):
             placement_name,
             placement_types,
             ad_id,
-            link_id=None,
-            campaign_id=None,
+            link_fullname=None,
+            campaign_fullname=None,
             subreddit=None,
             priority=None,
             ecpm=None,
@@ -110,7 +110,8 @@ class AdEventQueue(EventQueue):
         placement_name: The identifier of the placement.
         placement_types: Array of placements types.
         ad_id: Unique id of the ad response.
-        link_id: The id of the promoted link.
+        link_fullname: The fullname of the promoted link.
+        campaign_fullname: The fullname of the PromoCampaign.
         subreddit: The Subreddit of the ad was  displayed on.
         priority: The priority name of the ad.
         ecpm: The effective cpm of the ad.
@@ -129,8 +130,8 @@ class AdEventQueue(EventQueue):
         event.add("placement_name", placement_name)
         event.add("placement_types", placement_types)
         event.add("ad_id", ad_id)
-        event.add("link_id", link_id)
-        event.add("campaign_id", campaign_id)
+        event.add("link_fullname", link_fullname)
+        event.add("campaign_fullname", campaign_fullname)
         event.add("priority", priority)
         event.add("ecpm", ecpm)
 
