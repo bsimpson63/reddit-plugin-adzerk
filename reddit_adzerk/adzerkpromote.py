@@ -430,11 +430,14 @@ def update_flight(link, campaign, triggered_by=None):
             d['Impressions'] = campaign.impressions + ADZERK_IMPRESSION_BUMP
         else:
             total_budget_dollars = campaign.total_budget_pennies / 100.
+            daily_cap_dollars = total_budget_dollars / max(campaign.ndays, 1)
+            ndays = campaign.ndays
+            padding = 1 + (1. / (ndays + 1))
             # budget caps must be whole dollar amounts. round things up to prevent
             # things from underdelivering.
             d.update({
                 'CapType': 4,
-                'DailyCapAmount': int(math.ceil(total_budget_dollars / max(campaign.ndays, 1))),
+                'DailyCapAmount': int(math.ceil(daily_cap_dollars * padding)),
                 'LifetimeCapAmount': int(math.ceil(total_budget_dollars)),
             })
 
