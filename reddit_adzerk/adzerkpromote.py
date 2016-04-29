@@ -350,6 +350,19 @@ def update_advertiser(author, triggered_by=None):
 
     return az_advertiser
 
+def flight_is_active(needs_approval, is_paused, needs_payment, is_terminated,
+        is_deleted, is_overdelivered):
+
+    is_inactive = (
+        needs_approval or
+        is_paused or
+        needs_payment or
+        is_terminated or
+        is_deleted or
+        is_overdelivered
+    )
+
+    return not is_inactive
 
 def update_flight(link, campaign, triggered_by=None):
     """Add/update a reddit campaign as an Adzerk Flight"""
@@ -385,6 +398,16 @@ def update_flight(link, campaign, triggered_by=None):
     campaign_needs_approval = campaign.needs_approval
     campaign_is_paused = campaign.paused
     campaign_needs_payment = not promote.charged_or_not_needed(campaign)
+    campaign_is_terminated = campaign.is_terminated
+
+    is_active = flight_is_active(
+        needs_approval=campaign_needs_approval,
+        is_paused=campaign_is_paused,
+        needs_payment=campaign_needs_payment,
+        is_terminated=campaign_is_terminated,
+        is_deleted=campaign._deleted,
+        is_overdelivered=campaign_overdelivered,
+    )
 
     d = {
         'StartDate': date_to_adzerk(delayed_start),
@@ -396,10 +419,7 @@ def update_flight(link, campaign, triggered_by=None):
         'CampaignId': link.external_campaign_id,
         'PriorityId': g.az_selfserve_priorities[campaign.priority_name],
         'IsDeleted': False,
-        'IsActive': (not campaign_needs_approval and
-                     not campaign_is_paused and
-                     not campaign_needs_payment and
-                     not (campaign._deleted or campaign_overdelivered)),
+        'IsActive': is_active,
     }
 
     if campaign.frequency_cap:
@@ -566,6 +586,7 @@ def update_flight(link, campaign, triggered_by=None):
         requires_payment=campaign_needs_payment,
         is_overdelivered=campaign_overdelivered,
         is_paused=campaign_is_paused,
+        is_terminated=campaign_is_terminated,
     )
 
     if az_flight:
