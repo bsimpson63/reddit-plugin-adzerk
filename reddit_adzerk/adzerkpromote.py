@@ -457,9 +457,11 @@ def update_flight(link, campaign, triggered_by=None):
             # things from underdelivering.
             d.update({
                 'CapType': 4,
-                'DailyCapAmount': int(math.ceil(daily_cap_dollars * padding)),
                 'LifetimeCapAmount': int(math.ceil(total_budget_dollars)),
             })
+
+            if not campaign.no_daily_budget:
+                d['DailyCapAmount'] = int(math.ceil(daily_cap_dollars * padding))
 
     # Zerkel queries here
     if campaign.mobile_os:
