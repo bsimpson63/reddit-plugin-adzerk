@@ -453,14 +453,19 @@ def update_flight(link, campaign, triggered_by=None):
             daily_cap_dollars = total_budget_dollars / max(campaign.ndays, 1)
             ndays = campaign.ndays
             padding = 1 + (1. / (ndays + 1))
+            lifetime_cap = int(math.ceil(total_budget_dollars))
             # budget caps must be whole dollar amounts. round things up to prevent
             # things from underdelivering.
             d.update({
                 'CapType': 4,
-                'LifetimeCapAmount': int(math.ceil(total_budget_dollars)),
+                'LifetimeCapAmount': lifetime_cap,
             })
 
-            if not campaign.no_daily_budget:
+            if campaign.no_daily_budget:
+                # set the daily cap to the same as the lifetime cap since 
+                # `update_changed` doesn't handle unsetting attributes.
+                d['DailyCapAmount'] = lifetime_cap
+            else:
                 d['DailyCapAmount'] = int(math.ceil(daily_cap_dollars * padding))
 
     # Zerkel queries here
