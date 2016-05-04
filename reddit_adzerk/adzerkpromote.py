@@ -461,7 +461,7 @@ def update_flight(link, campaign, triggered_by=None):
                 'LifetimeCapAmount': lifetime_cap,
             })
 
-            if campaign.no_daily_budget:
+            if not campaign.use_daily_budget_cap:
                 # set the daily cap to the same as the lifetime cap since 
                 # `update_changed` doesn't handle unsetting attributes.
                 d['DailyCapAmount'] = lifetime_cap
