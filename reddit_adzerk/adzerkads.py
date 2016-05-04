@@ -16,6 +16,8 @@ from r2.lib.pages import Ads as BaseAds
 from r2.lib.wrapped import Templated
 from r2.models import Subreddit
 
+from reddit_adzerk import adzerkpromote
+
 class Ads(BaseAds):
     def __init__(self):
         BaseAds.__init__(self)
@@ -25,13 +27,17 @@ class Ads(BaseAds):
             include_subscriptions=False,
         )
 
+        properties = adzerkpromote.properties_from_context(
+            context=c,
+            site=c.site,
+            exclude=(None if c.user_is_loggedin else ["age_hours"]),
+        )
+
         data = {
             "keywords": list(keywords),
+            "properties": properties,
             "origin": c.request_origin,
         }
-
-        if isinstance(c.site, Subreddit) and not c.default_sr:
-            data["subreddit"] = c.site.name
 
         placements = request.GET.get("placements", None)
 

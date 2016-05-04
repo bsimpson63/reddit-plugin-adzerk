@@ -894,8 +894,13 @@ class AdserverResponse(object):
         self.body = body
 
 
-def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
-                   platform="desktop", is_refresh=False):
+def adzerk_request(
+    keywords, properties, user_id,
+    num_placements=1,
+    timeout=1.5,
+    platform="desktop",
+    is_refresh=False,
+):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
 
@@ -906,6 +911,7 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
           "siteId": g.az_selfserve_site_ids[platform],
           "adTypes": [LEADERBOARD_AD_TYPE],
           "eventIds": [EVENT_TYPE_UPVOTE, EVENT_TYPE_DOWNVOTE],
+          "properties": properties,
         }
         placements.append(placement)
 
@@ -922,8 +928,8 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
     if referrer:
         data["referrer"] = referrer
 
-    if uid:
-        data["user"] = {"key": uid}
+    if user_id:
+        data["user"] = {"key": user_id}
 
     url = 'https://%s/api/v2' % g.adzerk_engine_domain
     headers = {
@@ -1081,6 +1087,38 @@ def adzerk_request(keywords, uid, num_placements=1, timeout=1.5,
     return res
 
 
+def properties_from_context(context, site, exclude=None):
+    properties = dict()
+    age = None
+
+    if context.user_is_loggedin:
+        age = context.user._age
+    elif context.loid:
+        try:
+            loid_created = datetime.datetime.strptime(
+                context.loid.created,
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+            loid_created = loid_created.replace(tzinfo=g.tz)
+            now = datetime.datetime.now(g.tz)
+            age = now - loid_created
+        except ValueError as e:
+            g.log.info("unable to parse `%s`: %s",
+                LOID_CREATED_COOKIE, e.message)
+
+    if age is not None:
+        properties["age_hours"] = int(age.total_seconds() / (60 * 60))
+
+    if isinstance(site, Subreddit) and not context.default_sr:
+        properties["subreddit"] = site.name
+
+    if exclude is not None:
+        for key in exclude:
+            del properties[key]
+
+    return properties
+
+
 @add_controller
 class AdzerkApiController(api.ApiController):
     @csrf_exempt
@@ -1116,14 +1154,21 @@ class AdzerkApiController(api.ApiController):
         else:
             return
 
+        properties = properties_from_context(c, site)
+
         # backwards compat
         if platform is None:
             platform = "mobile_web" if is_mobile_web else "desktop"
 
         # request multiple ads in case some are hidden by the builder due
         # to the user's hides/preferences
-        response = adzerk_request(keywords, self.get_uid(loid),
-                                  platform=platform, is_refresh=is_refresh)
+        response = adzerk_request(
+            keywords=keywords,
+            properties=properties,
+            user_id=self.get_uid(loid),
+            platform=platform,
+            is_refresh=is_refresh,
+        )
 
         if not response:
             g.stats.simple_event('adzerk.request.no_promo')

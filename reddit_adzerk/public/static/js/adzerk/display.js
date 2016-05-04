@@ -76,12 +76,12 @@
 
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
         placement.setFlightCreativeId(creative);
-        placement.setProperties({ subreddit: config.subreddit });
+        placement.setProperties(config.properties);
       }
     } else {
       for (var type in PLACEMENT_TYPES) {
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
-        placement.setProperties({ subreddit: config.subreddit });
+        placement.setProperties(config.properties);
       }
     }
     
