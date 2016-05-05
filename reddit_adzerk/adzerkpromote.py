@@ -1116,7 +1116,8 @@ def properties_from_context(context, site, exclude=None):
 
     if exclude is not None:
         for key in exclude:
-            del properties[key]
+            if key in properties:
+                del properties[key]
 
     return properties
 
