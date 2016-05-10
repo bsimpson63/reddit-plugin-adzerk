@@ -105,8 +105,7 @@ def _get_total_impressions(report_fragment):
 
 
 def _get_total_clicks(report_fragment):
-    return (report_fragment.get("TotalClicks", 0) -
-        report_fragment.get("TotalFraudulentClicks", 0))
+    return report_fragment.get("TotalUniqueBucketClicks", 0)
 
 
 def _get_total_spent(report_fragment):
@@ -126,8 +125,7 @@ def _get_impressions(report_fragment):
 
 
 def _get_clicks(report_fragment):
-    return (report_fragment.get("Clicks", 0) -
-        report_fragment.get("FraudulentClicks", 0))
+    return report_fragment.get("UniqueBucketClicks", 0)
 
 
 def _get_spent(report_fragment):
