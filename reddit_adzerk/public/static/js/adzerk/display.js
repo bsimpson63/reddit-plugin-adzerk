@@ -70,6 +70,11 @@
   ados.run.push(function() {
     ados.isAsync = true;
     var placement = null;
+    var request = {
+      keywords: config.keywords,
+      properties: config.properties,
+      placement_types: [],
+    };
 
     if (config.placements) {
       var placements = config.placements.split(',');
@@ -82,11 +87,15 @@
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
         placement.setFlightCreativeId(creative);
         placement.setProperties(properties);
+
+        request.placement_types.push(PLACEMENT_TYPES[type]);
       }
     } else {
       for (var type in PLACEMENT_TYPES) {
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
         placement.setProperties(properties);
+
+        request.placement_types.push(PLACEMENT_TYPES[type]);
       }
     }
     
@@ -96,13 +105,32 @@
       ados_setKeywords(config.keywords);
     }
 
+    r.frames.postMessage(global.parent, 'request.adzerk', request);
+
     ados_load();
 
-    var timeout = 0;
     var load = setInterval(function() {
-      timeout++;
       if (global.ados_results) {
         clearInterval(load);
+
+        for (var key in global.ados_ads) {
+          if (!global.ados_ads.hasOwnProperty(key)) {
+            continue;
+          }
+
+          r.frames.postMessage(global.parent, 'response.adzerk', {
+            keywords: request.keywords,
+            properties: request.properties,
+            placement_types: request.placement_types,
+            placement_name: 'banner_' + key,
+            campaign_id: global.ados_ads[key].flight.campaign.id,
+            flight_id: global.ados_ads[key].flight.id,
+            creative_id: global.ados_ads[key].creative.id,
+            ad_id: global.ados_ads[key].id,
+            priority_id: global.ados_ads[key].flight.priorityId,
+            ad_type: global.ados_ads[key].creative.adType,
+          });
+        }
 
         // Load companion
         if (global.ados_results.sponsorship) {

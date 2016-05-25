@@ -65,6 +65,9 @@ class Adzerk(Plugin):
         ),
 
         'display': Module('display.js',
+            'lib/json2.js',
+            'custom-event.js',
+            'frames.js',
             'adzerk/display.js',
         ),
 
