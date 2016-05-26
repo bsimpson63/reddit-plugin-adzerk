@@ -32,6 +32,11 @@
   }
 
   var config = getConfig();
+  var properties = config.properties || {};
+
+  // Allows the yield manager to target a percentage of users
+  // with specific SSPs.
+  properties.percentage = Math.round(Math.random());
 
   // Display a random image in lieu of an ad for certain keywords.
   // This reduces the number of ad requests for low-fill targets.
@@ -76,12 +81,12 @@
 
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
         placement.setFlightCreativeId(creative);
-        placement.setProperties(config.properties);
+        placement.setProperties(properties);
       }
     } else {
       for (var type in PLACEMENT_TYPES) {
         placement = ados_add_placement(NETWORK, SITE, type, PLACEMENT_TYPES[type]);
-        placement.setProperties(config.properties);
+        placement.setProperties(properties);
       }
     }
     
