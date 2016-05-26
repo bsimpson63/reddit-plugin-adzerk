@@ -95,6 +95,8 @@ class AdEventQueue(EventQueue):
             placement_name,
             placement_types,
             ad_id,
+            rate_type,
+            clearing_price,
             link_fullname=None,
             campaign_fullname=None,
             subreddit=None,
@@ -110,6 +112,8 @@ class AdEventQueue(EventQueue):
         placement_name: The identifier of the placement.
         placement_types: Array of placements types.
         ad_id: Unique id of the ad response.
+        rate_type: Flat/CPM/CPC/etc.
+        clearing_price: What was paid for the rate type.
         link_fullname: The fullname of the promoted link.
         campaign_fullname: The fullname of the PromoCampaign.
         subreddit: The Subreddit of the ad was  displayed on.
@@ -130,6 +134,8 @@ class AdEventQueue(EventQueue):
         event.add("placement_name", placement_name)
         event.add("placement_types", placement_types)
         event.add("ad_id", ad_id)
+        event.add("rate_type", rate_type)
+        event.add("clearing_price", clearing_price)
         event.add("link_fullname", link_fullname)
         event.add("campaign_fullname", campaign_fullname)
         event.add("priority", priority)

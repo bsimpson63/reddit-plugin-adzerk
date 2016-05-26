@@ -82,6 +82,12 @@ RATE_TYPE_BY_COST_BASIS = {
     promo.PROMOTE_COST_BASIS.cpc: 3,
 }
 
+RATE_TYPE_NAMES = {
+    1: 'Flat',
+    2: 'CPM',
+    3: 'CPC',
+}
+
 GOAL_TYPE_BY_COST_BASIS = {
     promo.PROMOTE_COST_BASIS.fixed_cpm: 1,
     promo.PROMOTE_COST_BASIS.cpm: 2,
@@ -945,6 +951,7 @@ def adzerk_request(
         "keywords": keywords,
         "ip": request.ip,
         "enableBotFiltering": True,
+        "includePricingData": True,
     }
 
     referrer = request.headers.get("referer", None)
@@ -1030,6 +1037,10 @@ def adzerk_request(
 
         placement = placements_by_div[div]
         ad_id = decision['adId']
+        pricing = decision.get("pricing", {})
+        revenue = pricing.get("revenue")
+        rate_type_id = pricing.get("rateType")
+        rate_type = RATE_TYPE_NAMES.get(rate_type_id, None)
 
         # adserver ads are not reddit links, we return the body
         if decision['campaignId'] in g.adserver_campaign_ids:
@@ -1039,6 +1050,8 @@ def adzerk_request(
                 placement_name=div,
                 placement_types=placement["adTypes"],
                 ad_id=ad_id,
+                rate_type=rate_type,
+                clearing_price=revenue,
                 subreddit=c.site,
                 request=request,
                 context=c,
@@ -1072,6 +1085,8 @@ def adzerk_request(
             placement_name=div,
             placement_types=placement["adTypes"],
             ad_id=ad_id,
+            rate_type=rate_type,
+            clearing_price=revenue,
             subreddit=c.site,
             link_fullname=link_fullname,
             campaign_fullname=campaign_fullname,
