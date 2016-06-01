@@ -89,5 +89,7 @@ class AdServingController(MinimalController):
 class AdXController(MinimalController):
 
     def GET_passback(self):
+        c.allow_framing = True
+
         return Passback(passback_id=g.live_config["adx_passback_id"]).render()
 
