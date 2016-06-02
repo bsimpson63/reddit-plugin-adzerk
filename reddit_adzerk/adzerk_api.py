@@ -452,6 +452,14 @@ class Campaign(Base):
     )
 
     @classmethod
+    def get(cls, Id, exclude_flights=False):
+        url = '/'.join([cls._base_url, cls._name, str(Id)])
+        url += '?excludeFlights=%s' % str(exclude_flights).lower()
+        response = requests.get(url, headers=cls._headers())
+        item = handle_response(response)
+        return cls._from_item(item)
+
+    @classmethod
     def _from_item(cls, item):
         if not 'Flights' in item or not item['Flights']:
             item['Flights'] = []   # not always included in response

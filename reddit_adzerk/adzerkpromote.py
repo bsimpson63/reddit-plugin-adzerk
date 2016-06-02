@@ -168,7 +168,10 @@ def make_change_strings(changed):
 def update_campaign(link, az_advertiser=None, triggered_by=None):
     """Add/update a reddit link as an Adzerk Campaign"""
     if getattr(link, 'external_campaign_id', None) is not None:
-        az_campaign = adzerk_api.Campaign.get(link.external_campaign_id)
+        az_campaign = adzerk_api.Campaign.get(
+            link.external_campaign_id,
+            exclude_flights=True,
+        )
     else:
         az_campaign = None
 
