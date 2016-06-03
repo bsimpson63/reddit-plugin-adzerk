@@ -961,6 +961,7 @@ def adzerk_request(
 
     if referrer:
         data["referrer"] = referrer
+        data["url"] = referrer
 
     if user_id:
         data["user"] = {"key": user_id}
