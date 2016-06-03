@@ -923,6 +923,7 @@ def adzerk_request(
     timeout=1.5,
     platform="desktop",
     is_refresh=False,
+    referrer=None,
 ):
     placements = []
     divs = ["div%s" % i for i in xrange(num_placements)]
@@ -957,11 +958,13 @@ def adzerk_request(
         "includePricingData": True,
     }
 
-    referrer = request.headers.get("referer", None)
+    page_url = request.headers.get("referer", None)
 
-    if referrer:
+    if page_url is not None:
+        data["url"] = page_url
+
+    if referrer is not None:
         data["referrer"] = referrer
-        data["url"] = referrer
 
     if user_id:
         data["user"] = {"key": user_id}
@@ -1181,8 +1184,19 @@ class AdzerkApiController(api.ApiController):
         loid=nop('loid', None),
         is_refresh=VBoolean("is_refresh", default=False),
         displayed_things=VPrintable("dt", max_length=200),
+        referrer=VPrintable("referrer", max_length=2048),
     )
-    def POST_request_promo(self, site, srnames, is_mobile_web, platform, loid, is_refresh, displayed_things):
+    def POST_request_promo(
+        self,
+        site,
+        srnames,
+        is_mobile_web,
+        platform,
+        loid,
+        is_refresh,
+        displayed_things,
+        referrer,
+    ):
         self.OPTIONS_request_promo()
 
         if (errors.INVALID_SITE_PATH, "site") in c.errors:
@@ -1214,6 +1228,7 @@ class AdzerkApiController(api.ApiController):
             user_id=self.get_uid(loid),
             platform=platform,
             is_refresh=is_refresh,
+            referrer=referrer,
         )
 
         if not response:
