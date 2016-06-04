@@ -4,17 +4,17 @@ from r2.models import PromoCampaign
 
 class PromoCampaignByFlightIdCache():
     @classmethod
-    def _cachekey(cls, flight_id):
-        return "promo.flight.%d" % flight_id
+    def _cache_key(cls, flight_id):
+        return "flightid:%s" % flight_id
 
     @classmethod
     def add(cls, campaign):
-        cachekey = cls._cachekey(campaign.external_flight_id)
-        g.cache.set(cachekey, campaign._fullname, time=60*60*24)
+        key = cls._cache_key(campaign.external_flight_id)
+        g.gencache.set(key, campaign._fullname, time=60*60*24)
 
     @classmethod
     def get(cls, flight_id):
-        fullname = g.cache.get(cls._cachekey(flight_id))
+        fullname = g.gencache.get(cls._cache_key(flight_id))
 
         if not fullname:
             q = PromoCampaign._query(
