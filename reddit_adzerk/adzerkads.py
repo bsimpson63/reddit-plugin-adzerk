@@ -40,9 +40,14 @@ class Ads(BaseAds):
         }
 
         placements = request.GET.get("placements", None)
+        percentage = request.GET.get("percentage", None)
 
-        if c.user_is_sponsor and placements:
-            data["placements"] = placements
+        if c.user_is_sponsor:
+            if placements is not None:
+                data["placements"] = placements
+
+            if percentage is not None:
+                data["properties"]["percentage"] = percentage
 
         self.ad_url = g.adzerk_url.format(data=json.dumps(data))
         self.frame_id = "ad_main"

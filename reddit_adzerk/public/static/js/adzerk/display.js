@@ -36,7 +36,9 @@
 
   // Allows the yield manager to target a percentage of users
   // with specific SSPs.
-  properties.percentage = Math.round(Math.random());
+  if (!properties.hasOwnProperty('percentage')) {
+    properties.percentage = Math.round(Math.random());
+  }
 
   // Display a random image in lieu of an ad for certain keywords.
   // This reduces the number of ad requests for low-fill targets.
