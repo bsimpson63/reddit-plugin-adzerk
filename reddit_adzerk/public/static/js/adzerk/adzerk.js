@@ -30,10 +30,18 @@
       return;
     }
 
-    var message = e.data.split(':');
+    var data = e.data;
 
-    if (message[0] == 'ados.createAdFrame') {
-      r.adzerk.createSponsorshipAdFrame();
+    if (typeof data === 'string') {
+      var message = data.split(':');
+
+      if (message[0] == 'ados.createAdFrame') {
+        r.adzerk.createSponsorshipAdFrame();
+      }
+    }
+
+    if (window.frames.ad_main && window.frames.ad_main.postMessage) {
+      window.frames.ad_main.postMessage(data, '*');
     }
   });
 
