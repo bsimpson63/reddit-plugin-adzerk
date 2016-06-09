@@ -547,6 +547,10 @@ def update_flight(link, campaign, triggered_by=None):
             d.update({
                 'SiteZoneTargeting': site_targeting,
             })
+    elif az_flight and az_flight.SiteZoneTargeting:
+        d.update({
+            'SiteZoneTargeting': [],
+        })
 
     # special handling for location conversions between reddit and adzerk
     if campaign.location:
