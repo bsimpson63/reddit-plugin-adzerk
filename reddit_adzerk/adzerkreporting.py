@@ -379,10 +379,19 @@ def _process_daily_link_report(link, report_id, queued_date):
             values["spent_pennies"] = values["spent_pennies"] + (spent * 100.)
 
         for (campaign, date), values in campaign_details.iteritems():
+            # hack around `target_name`s for multi subreddit collections
+            # being overly long.
+            if (campaign.target.is_collection and
+                    "/r/" in campaign.target.pretty_name):
+
+                subreddit = "multi_%s" % PromoCampaign.SUBREDDIT_TARGET
+            else:
+                subreddit = campaign.target_name
+
             _insert_daily_campaign_reporting(
                 codename=campaign._fullname,
                 date=date,
-                subreddit=campaign.target_name,
+                subreddit=subreddit,
                 **values
             )
 
