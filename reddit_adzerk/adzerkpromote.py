@@ -417,7 +417,8 @@ def update_flight(link, campaign, triggered_by=None):
     elif targets_frontpage:
         keywords.add("s.frontpage")
 
-    campaign_needs_approval = campaign.needs_approval
+    campaign_needs_approval = (not campaign.is_approved and
+                               promote.campaign_needs_review(campaign, link))
     campaign_is_paused = campaign.paused
     campaign_needs_payment = not promote.charged_or_not_needed(campaign)
     campaign_is_terminated = campaign.is_terminated
