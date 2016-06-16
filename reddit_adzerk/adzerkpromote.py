@@ -90,7 +90,7 @@ RATE_TYPE_NAMES = {
 
 GOAL_TYPE_BY_COST_BASIS = {
     promo.PROMOTE_COST_BASIS.fixed_cpm: 1,
-    promo.PROMOTE_COST_BASIS.cpm: 1,
+    promo.PROMOTE_COST_BASIS.cpm: 2,
     promo.PROMOTE_COST_BASIS.cpc: 2,
 }
 
@@ -471,12 +471,6 @@ def update_flight(link, campaign, triggered_by=None):
         if campaign.cost_basis == promo.PROMOTE_COST_BASIS.fixed_cpm:
             d['Impressions'] = campaign.impressions + ADZERK_IMPRESSION_BUMP
         else:
-            # add an impression goal for cpm bids so that
-            # caps aren't exceeded by more than this.
-            if campaign.cost_basis == promo.PROMOTE_COST_BASIS.cpm:
-                min_cpm = g.min_bid_pennies * 1000
-                d['Impressions'] = campaign.total_budget_pennies / min_cpm
-
             total_budget_dollars = campaign.total_budget_pennies / 100.
             daily_cap_dollars = total_budget_dollars / max(campaign.ndays, 1)
             ndays = campaign.ndays
