@@ -19,12 +19,13 @@ from r2.models import Subreddit
 from reddit_adzerk import adzerkpromote
 
 class Ads(BaseAds):
-    def __init__(self):
+    def __init__(self, displayed_things=[]):
         BaseAds.__init__(self)
 
         keywords = promote.keywords_from_context(
             c.user, c.site,
             include_subscriptions=False,
+            displayed_things=displayed_things
         )
 
         properties = adzerkpromote.properties_from_context(
