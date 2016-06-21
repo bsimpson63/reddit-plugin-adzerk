@@ -14,12 +14,11 @@ class PromoCampaignByFlightIdCache():
 
     @classmethod
     def get(cls, flight_id):
-        fullname = g.gencache.get(cls._cache_key(flight_id))
+        fullname = g.gencache.get(cls._cache_key(flight_id), stale=True)
 
         if not fullname:
             q = PromoCampaign._query(
                 PromoCampaign.c.external_flight_id == flight_id,
-                data=True,
             )
             q._limit = 1
             campaigns = list(q)
