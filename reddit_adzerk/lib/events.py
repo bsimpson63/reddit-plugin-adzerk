@@ -129,7 +129,6 @@ class AdEventQueue(EventQueue):
             context=context,
         )
 
-        event.add("keywords", keywords)
         event.add("platform", platform)
         event.add("placement_name", placement_name)
         event.add("placement_types", placement_types)
@@ -140,6 +139,12 @@ class AdEventQueue(EventQueue):
         event.add("campaign_fullname", campaign_fullname)
         event.add("priority", priority)
         event.add("ecpm", ecpm)
+
+        # keywords are case insensitive, normalize and sort them
+        # for easier equality testing.
+        keywords = sorted(k.lower() for k in keywords)
+
+        event.add("keywords", keywords)
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)
