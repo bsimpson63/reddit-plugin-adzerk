@@ -19,7 +19,7 @@ from r2.models import Subreddit
 from reddit_adzerk import adzerkpromote
 
 class Ads(BaseAds):
-    def __init__(self, displayed_things=[]):
+    def __init__(self, displayed_things=[], link=None):
         BaseAds.__init__(self)
 
         keywords = promote.keywords_from_context(
@@ -33,6 +33,9 @@ class Ads(BaseAds):
             site=c.site,
             exclude=(None if c.user_is_loggedin else ["age_hours"]),
         )
+
+        if link:
+            properties["page"] = link._fullname
 
         data = {
             "keywords": list(keywords),
