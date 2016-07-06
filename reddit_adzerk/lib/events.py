@@ -153,7 +153,10 @@ class AdEventQueue(EventQueue):
         matched_keywords = sorted(k.lower() for k in matched_keywords)
 
         event.add("keywords", keywords)
-        event.add("matched_keywords", matched_keywords)
+
+        # don't send empty arrays.
+        if matched_keywords:
+            event.add("matched_keywords", matched_keywords)
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)
