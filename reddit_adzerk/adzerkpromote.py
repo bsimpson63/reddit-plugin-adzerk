@@ -1,5 +1,4 @@
 from collections import namedtuple
-import base64
 import datetime
 import json
 import math
@@ -1054,29 +1053,6 @@ def adzerk_request(
         revenue = pricing.get("revenue")
         rate_type_id = pricing.get("rateType")
         rate_type = RATE_TYPE_NAMES.get(rate_type_id, None)
-        impression_url = decision.get("impressionUrl")
-        impression_b64_data = UrlParser(impression_url).query_dict.get("e", "")
-        impression_id, matched_keywords = None, []
-
-        try:
-            # fix padding
-            impression_b64_data = (
-                impression_b64_data +
-                ("=" * (len(impression_b64_data) % 4))
-            )
-            impression_data = json.loads(
-                base64.b64decode(impression_b64_data)
-            )
-        except TypeError:
-            impression_data = None
-
-        if impression_data is not None:
-            impression_id = impression_data.get("di")
-            matched_keywords = impression_data.get("mk")
-
-        if matched_keywords:
-            matched_keywords = matched_keywords.split(",")
-
 
         # adserver ads are not reddit links, we return the body
         if decision['campaignId'] in g.adserver_campaign_ids:
@@ -1086,8 +1062,6 @@ def adzerk_request(
                 placement_name=div,
                 placement_types=placement["adTypes"],
                 ad_id=ad_id,
-                impression_id=impression_id,
-                matched_keywords=matched_keywords,
                 rate_type=rate_type,
                 clearing_price=revenue,
                 subreddit=c.site,
@@ -1123,8 +1097,6 @@ def adzerk_request(
             placement_name=div,
             placement_types=placement["adTypes"],
             ad_id=ad_id,
-            impression_id=impression_id,
-            matched_keywords=matched_keywords,
             rate_type=rate_type,
             clearing_price=revenue,
             subreddit=c.site,
