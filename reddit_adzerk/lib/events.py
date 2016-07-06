@@ -1,3 +1,4 @@
+from baseplate.events import FieldKind
 from pylons import app_globals as g
 
 from r2.lib.eventcollector import (
@@ -95,6 +96,8 @@ class AdEventQueue(EventQueue):
             placement_name,
             placement_types,
             ad_id,
+            impression_id,
+            matched_keywords,
             rate_type,
             clearing_price,
             link_fullname=None,
@@ -112,6 +115,8 @@ class AdEventQueue(EventQueue):
         placement_name: The identifier of the placement.
         placement_types: Array of placements types.
         ad_id: Unique id of the ad response.
+        impression_id: Unique id of the impression.
+        matched_keywords: An array of the keywords which matched for the ad.
         rate_type: Flat/CPM/CPC/etc.
         clearing_price: What was paid for the rate type.
         link_fullname: The fullname of the promoted link.
@@ -133,6 +138,8 @@ class AdEventQueue(EventQueue):
         event.add("placement_name", placement_name)
         event.add("placement_types", placement_types)
         event.add("ad_id", ad_id)
+        event.add("impression_id",
+                  impression_id, kind=FieldKind.HIGH_CARDINALITY)
         event.add("rate_type", rate_type)
         event.add("clearing_price", clearing_price)
         event.add("link_fullname", link_fullname)
@@ -143,8 +150,10 @@ class AdEventQueue(EventQueue):
         # keywords are case insensitive, normalize and sort them
         # for easier equality testing.
         keywords = sorted(k.lower() for k in keywords)
+        matched_keywords = sorted(k.lower() for k in matched_keywords)
 
         event.add("keywords", keywords)
+        event.add("matched_keywords", matched_keywords)
 
         if not isinstance(subreddit, FakeSubreddit):
             event.add_subreddit_fields(subreddit)
