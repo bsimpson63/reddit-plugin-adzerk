@@ -1059,8 +1059,8 @@ def adzerk_request(
         impression_id, matched_keywords = None, []
 
         try:
-            # fix padding
-            impression_b64_data = (
+            # fix padding and string encode
+            impression_b64_data = str(
                 impression_b64_data +
                 ("=" * (len(impression_b64_data) % 4))
             )
