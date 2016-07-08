@@ -263,7 +263,9 @@ def update_creative(link, az_advertiser, triggered_by=None):
     # as long as there are no 3rd party trackers for the link
     # it's DNT compliant.
     DNT_compliant = (link.third_party_tracking is None and
-        link.third_party_tracking_2 is None)
+        link.third_party_tracking_2 is None and
+        not link.moat_tracking and
+        not getattr(link, "moat_engagement_tracking", False))
 
     d = {
         'Body': title,
