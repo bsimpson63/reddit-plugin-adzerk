@@ -5,6 +5,7 @@ import json
 import math
 import random
 import re
+import socket
 import string
 from urllib import quote
 
@@ -1011,6 +1012,8 @@ def adzerk_request(
         return None
     except requests.exceptions.ConnectionError:
         g.stats.simple_event('adzerk.request.refused')
+        return None
+    except socket.error:
         return None
     finally:
         timer.stop()
